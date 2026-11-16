@@ -4,19 +4,17 @@ export default function NotFound(){
             
             <div className="w-full max-w-4xl bg-[var(--primary)] border-3 border-[var(--secondary-dark)] rounded-[4rem] p-8 md:p-16 text-center shadow-lg">
                 
-    
                 <h1 className="font-[var(--fonte-texto)] text-7xl md:text-9xl font-extrabold text-[var(--bg-primary)] tracking-wider mb-4 drop-shadow-md">
                 404
                 </h1>
 
-                
                 <h2 className="font-[var(--fonte-texto)] text-2xl md:text-4xl font-bold text-[var(--bg-primary)] mb-6">
-                Ops! Página não encontrada.
+                Ops! Estação não encontrada.
                 </h2>
 
                 <p className="font-[var(--fonte-texto)] text-lg md:text-2xl text-[var(--bg-primary)] leading-relaxed max-w-2xl mx-auto mb-10">
-                Parece que você tentou acessar um caminho que não existe na <span className="font-bold underline">Post UP</span>. 
-                Mas não se preocupe, a sustentabilidade e a inovação continuam por aqui!
+                Parece que você pegou uma linha que não existe no <span className="font-bold underline">FluxFlow</span>. 
+                Mas não se preocupe, retorne à plataforma e siga rumo ao seu destino com rotas inteligentes!
                 </p>
 
                 <div className="flex justify-center">
@@ -29,12 +27,12 @@ export default function NotFound(){
                 </div>
 
             </div>
-
             
             <section className="bg-[var(--secondary-dark)] border-3 border-[var(--primary)] rounded-[3rem] p-6 text-center text-[var(--bg-primary)] max-w-xl">
                 <p className="font-[var(--fonte-texto)] text-base md:text-lg">
-                    Precisa de ajuda? Entre em contato com a equipe da <span className="font-bold">Post UP</span> através da nossa página de suporte.
+                    Precisa de ajuda com o trajeto? Entre em contato com a equipe do <span className="font-bold">FluxFlow</span> através da nossa página de suporte.
                 </p>
             </section>
-    </main>
-)}
+        </main>
+    );
+}

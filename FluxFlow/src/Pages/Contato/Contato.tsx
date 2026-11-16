@@ -5,9 +5,9 @@ import Button from "../../Components/Button/Button";
 import { useForm } from "react-hook-form";
 
 interface FormularioData {
-  nome: string;
-  email: string;
-  mensagem: string;
+    nome: string;
+    email: string;
+    mensagem: string;
 }
 
 export default function Contato() {
@@ -50,8 +50,8 @@ export default function Contato() {
             <div className="text-center px-4">
             <Card 
                 titulo="Contato" 
-                sub="Fale conosco!!" 
-                descricao="Na Post UP, nós acreditamos que grandes parcerias começam com uma boa conversa. Se você quer tirar uma ideia do papel, escalar os seus resultados ou apenas entender como podemos ajudar a sua empresa a crescer, você está no lugar certo." 
+                sub="Fale com a equipe do FluxFlow!" 
+                descricao="Acreditamos que uma mobilidade urbana eficiente começa com uma boa comunicação. Se você tem sugestões, encontrou divergências nos status das linhas ou quer saber mais sobre o projeto, entre em contato conosco." 
             />
             <Button navegacao="/sistema" texto="Conheça mais"/>
             </div>
@@ -155,7 +155,7 @@ export default function Contato() {
                     text-[var(--text-main)]
                 "
                 >
-                Preencha os campos abaixo e fale com nossa equipe.
+                Preencha os campos abaixo e fale com nossa equipe de suporte.
                 </p>
 
                 {/* Mensagem exibida via useState e controlada pelo useEffect */}
@@ -353,4 +353,4 @@ export default function Contato() {
         </section>
         </main>
     );
-    }
+}

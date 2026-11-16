@@ -1,4 +1,4 @@
-import logoBranca from "../../img/logo_branca.png";
+import logoBranca from "../../img/fluxflow_branca.png";
 
 export default function Footer(){
     return(
