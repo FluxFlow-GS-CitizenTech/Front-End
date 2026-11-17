@@ -1,71 +1,109 @@
-import Button from "../../Components/Button/Button";
-import Card from "../../Components/Card/Card";
-{/* import demostracao from "../../img/Demonstração de funcionamento da Plataforma.png";*/}
-import imgFundo from "../../img/fundo3.jpg";
+    import Button from "../../Components/Button/Button";
+    import Card from "../../Components/Card/Card";
+    {/* import demostracao from "../../img/Demonstração de funcionamento da Plataforma.png"; */}
+    import imgFundo from "../../img/fundo3.jpg";
 
-export default function Sobre(){
+    export default function Sobre() {
     return (
-        <main className="conteudo">
-            <section 
-                className="relative w-full h-[calc(100vh-80px)] bg-cover bg-center bg-no-repeat border-b-[5px] border-[var(--secondary-dark)] flex items-center justify-center"
-                style={{
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url(${imgFundo})`
-                }}
-            >
-                <div className="text-center px-4">
-                    <Card 
-                        titulo="Sobre o FluxFlow" 
-                        sub="Detalhes do projeto, objetivos e diferenciais de mobilidade" 
-                        descricao="Introdução, Objetivos, Justificativa e RoadMap do sistema metroferroviário inteligente." 
-                    />
-                </div>
+        <main className="conteudo flex flex-col items-center pb-24">
+        {/* HERO SECTION */}
+        <section 
+            className="relative w-full min-h-[75vh] md:min-h-[80vh] bg-cover bg-center bg-no-repeat border-b-[5px] border-[var(--secondary-dark)] flex items-center justify-center px-6 py-20"
+            style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(0, 26, 51, 0.78), rgba(0, 0, 0, 0.72)), url(${imgFundo})`
+            }}
+        >
+            <div className="max-w-[96rem] w-full flex flex-col items-center text-center gap-8 z-10">
+            <Card 
+                titulo="Sobre o FluxFlow" 
+                sub="Detalhes do projeto, objetivos e diferenciais de mobilidade" 
+                descricao="Introdução, Objetivos, Justificativa e RoadMap do sistema metroferroviário inteligente." 
+            />
+            </div>
+        </section>
+        
+        {/* CONTAINER PRINCIPAL DAS SEÇÕES */}
+        <div className="w-[95%] max-w-[116rem] -mt-14 z-20 flex flex-col gap-12 md:gap-16">
+            
+            {/* Seção Introdução */}
+            <section className="flex flex-col items-center gap-8 bg-[var(--primary)] text-[var(--bg-primary)] border-2 border-[var(--secondary)] p-8 sm:p-14 md:p-20 rounded-[3rem] shadow-[0_20px_50px_rgba(0,51,102,0.22)]">
+            <span className="px-5 py-1.5 rounded-full bg-white/15 text-[1.35rem] font-bold uppercase tracking-widest">
+                Visão Geral
+            </span>
+
+            <h2 className="text-[2.8rem] sm:text-[3.6rem] md:text-[var(--titulo-main)] font-[var(--fonte-principal)] font-bold underline decoration-[var(--secondary)] decoration-4 underline-offset-8 text-center leading-tight">
+                Introdução
+            </h2>
+
+            <p className="text-[1.65rem] sm:text-[1.9rem] md:text-[2.1rem] font-[var(--fonte-texto)] text-[var(--bg-primary)]/95 text-center leading-relaxed max-w-[82rem]">
+                O <strong className="font-bold underline decoration-[var(--secondary)]">FluxFlow</strong> é um aplicativo gratuito desenvolvido por <span className="font-semibold text-white">Felipe Lima, Giovanni Zorzetto e Raphael Gomes</span>[cite: 1] com o propósito de transformar a experiência dos passageiros no transporte sobre trilhos. Nossa solução utiliza dados em tempo real, inteligência de rotas e relatórios colaborativos para combater os principais gargalos enfrentados diariamente por milhões de usuários no sistema metroferroviário.
+            </p>
+            </section>
+
+            {/* Seção Objetivos */}
+            <section className="flex flex-col items-center gap-8 bg-[var(--secondary-dark)] text-[var(--bg-primary)] border-2 border-[var(--primary)] p-8 sm:p-14 md:p-20 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+            <span className="px-5 py-1.5 rounded-full bg-white/15 text-[1.35rem] font-bold uppercase tracking-widest">
+                Metas e Foco
+            </span>
+
+            <h2 className="text-[2.8rem] sm:text-[3.6rem] md:text-[var(--titulo-main)] font-[var(--fonte-principal)] font-bold underline decoration-[var(--bg-primary)] decoration-4 underline-offset-8 text-center leading-tight">
+                Objetivos
+            </h2>
+
+            <p className="text-[1.65rem] sm:text-[1.9rem] md:text-[2.1rem] font-[var(--fonte-texto)] text-[var(--bg-primary)]/95 text-center leading-relaxed max-w-[82rem]">
+                Nosso objetivo principal é otimizar o tempo de deslocamento e garantir viagens mais confortáveis e previsíveis. Para isso, oferecemos funcionalidades avançadas como: <strong className="font-bold">Status em Tempo Real</strong> de linhas e velocidades médias, indicação do <strong className="font-bold">Melhor Vagão</strong> para embarque, desembarque e baldeação, <strong className="font-bold">Rotas Alternativas Inteligentes</strong> (normais, menos lotadas ou mais rápidas), além de diferenciais exclusivos como um <strong className="font-bold">HeatMap de lotação</strong> e guias para otimizar o trajeto dentro de estações complexas.
+            </p>
+            </section>
+
+            {/* Seção Justificativa */}
+            <section className="flex flex-col items-center gap-8 bg-[var(--primary)] text-[var(--bg-primary)] border-2 border-[var(--secondary)] p-8 sm:p-14 md:p-20 rounded-[3rem] shadow-[0_20px_50px_rgba(0,51,102,0.22)]">
+            <span className="px-5 py-1.5 rounded-full bg-white/15 text-[1.35rem] font-bold uppercase tracking-widest">
+                Relevância Urbana
+            </span>
+
+            <h2 className="text-[2.8rem] sm:text-[3.6rem] md:text-[var(--titulo-main)] font-[var(--fonte-principal)] font-bold underline decoration-[var(--secondary)] decoration-4 underline-offset-8 text-center leading-tight">
+                Justificativa
+            </h2>
+
+            <p className="text-[1.65rem] sm:text-[1.9rem] md:text-[2.1rem] font-[var(--fonte-texto)] text-[var(--bg-primary)]/95 text-center leading-relaxed max-w-[82rem]">
+                Com mais de 4 milhões de passageiros diários no metrô e estações movimentadas que registram centenas de milhares de embarques (como Sé e Luz), a superlotação em horários de pico, os atrasos e a falta de orientações claras geram estresse e perda de tempo. Embora aplicativos tradicionais ofereçam rotas gerais focadas em ônibus, o FluxFlow preenche essa lacuna com foco exclusivo no modal sobre trilhos, contando também com uma rede colaborativa onde os próprios usuários reportam alertas.
+            </p>
+            </section>
+
+            {/* Seção RoadMap */}
+            <section className="flex flex-col items-center gap-8 bg-[var(--secondary-dark)] text-[var(--bg-primary)] border-2 border-[var(--primary)] p-8 sm:p-14 md:p-20 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.2)]">
+            <span className="px-5 py-1.5 rounded-full bg-white/15 text-[1.35rem] font-bold uppercase tracking-widest">
+                Evolução do Projeto
+            </span>
+
+            <h2 className="text-[2.8rem] sm:text-[3.6rem] md:text-[var(--titulo-main)] font-[var(--fonte-principal)] font-bold underline decoration-[var(--bg-primary)] decoration-4 underline-offset-8 text-center leading-tight">
+                RoadMap
+            </h2>
+
+            <p className="text-[1.65rem] sm:text-[1.9rem] md:text-[2.1rem] font-[var(--fonte-texto)] text-[var(--bg-primary)]/95 text-center leading-relaxed max-w-[82rem]">
+                Acompanhamento estruturado das etapas de desenvolvimento, prototipação e validação da plataforma FluxFlow.
+            </p>
+
+            {/* Espaço reservado elegante enquanto a imagem está comentada */}
+            <div className="w-full max-w-[80rem] h-[22rem] sm:h-[26rem] rounded-[2rem] border-2 border-dashed border-white/35 bg-black/15 flex flex-col items-center justify-center gap-3 p-6 text-center">
+                <span className="text-[1.6rem] sm:text-[1.8rem] font-bold text-white/90">
+                RoadMap / Diagrama de Funcionamento
+                </span>
+                <span className="text-[1.4rem] text-white/70 max-w-[46rem]">
+                Espaço reservado para o infográfico ou print de demonstração da plataforma.
+                </span>
+            </div>
+
+            {/* Imagem comentada conforme solicitação */}
+            {/* <img className="p-0 m-0 w-full h-auto block rounded-2xl" src={demostracao} alt="Fluxo de funcionamento do FluxFlow" /> */}
             </section>
             
-            <div className="w-full h-auto flex flex-col gap-[6rem]">
-                
-                {/* Seção Introdução */}
-                <section className="flex flex-col gap-[5rem] mt-[4rem] bg-[var(--primary)] text-[var(--bg-dark)] border-[4px] border-[var(--secondary)] p-[2rem] min-[426px]:p-[5rem] rounded-[4rem]">
-                    <h2 className="text-[2.5rem] min-[426px]:text-[length:var(--titulo-main)] font-[var(--fonte-texto)] font-normal underline decoration-[var(--secondary)] text-center">
-                        Introdução
-                    </h2>
-                    <p className="text-[1.5rem] leading-[2.4rem] min-[426px]:text-[2.1rem] min-[426px]:leading-[4rem] font-[var(--fonte-texto)] text-center">
-                        O <strong>FluxFlow</strong> é um aplicativo gratuito[cite: 5] desenvolvido por <em>Felipe Lima, Giovanni Zorzetto e Raphael Gomes</em>[cite: 1] com o propósito de transformar a experiência dos passageiros no transporte sobre trilhos. Nossa solução utiliza dados em tempo real, inteligência de rotas e relatórios colaborativos para combater os principais gargalos enfrentados diariamente por milhões de usuários no sistema metroferroviário[cite: 5, 7, 8].
-                    </p>
-                </section>
-
-                {/* Seção Objetivos */}
-                <section className="flex flex-col gap-[5rem] mt-[4rem] bg-[var(--secondary-dark)] text-[var(--bg-dark)] border-[4px] border-[var(--primary)] p-[2rem] min-[426px]:p-[5rem] rounded-[4rem]">
-                    <h2 className="text-[2.5rem] min-[426px]:text-[length:var(--titulo-main)] font-[var(--fonte-texto)] font-normal underline decoration-[var(--secondary)] text-center">
-                        Objetivos
-                    </h2>
-                    <p className="text-[1.5rem] leading-[2.4rem] min-[426px]:text-[2.1rem] min-[426px]:leading-[4rem] font-[var(--fonte-texto)] text-center">
-                        Nosso objetivo principal é otimizar o tempo de deslocamento e garantir viagens mais confortáveis e previsíveis. Para isso, oferecemos funcionalidades avançadas como: <strong>Status em Tempo Real</strong> de linhas e velocidades médias[cite: 5], indicação do <strong>Melhor Vagão</strong> para embarque, desembarque e baldeação[cite: 5], <strong>Rotas Alternativas Inteligentes</strong> (normais, menos lotadas ou mais rápidas)[cite: 5], além de diferenciais exclusivos como um <strong>HeatMap de lotação</strong> e guias para otimizar o trajeto dentro de estações complexas e gigantescas[cite: 7].
-                    </p>
-                </section>
-
-                {/* Seção Justificativa */}
-                <section className="flex flex-col gap-[5rem] mt-[4rem] bg-[var(--primary)] text-[var(--bg-dark)] border-[4px] border-[var(--secondary)] p-[2rem] min-[426px]:p-[5rem] rounded-[4rem]">
-                    <h2 className="text-[2.5rem] min-[426px]:text-[length:var(--titulo-main)] font-[var(--fonte-texto)] font-normal underline decoration-[var(--secondary)] text-center">
-                        Justificativa
-                    </h2>
-                    <p className="text-[1.5rem] leading-[2.4rem] min-[426px]:text-[2.1rem] min-[426px]:leading-[4rem] font-[var(--fonte-texto)] text-center">
-                        Com mais de 4 milhões de passageiros diários no metrô[cite: 8] e estações movimentadas que registram centenas de milhares de embarques (como Sé e Luz)[cite: 8], a superlotação em horários de pico, os atrasos e a falta de orientações claras sobre o posicionamento nos trens geram estresse e perda de tempo. Embora aplicativos tradicionais de mobilidade ofereçam rotas gerais, eles focam primordialmente em ônibus[cite: 7]. O FluxFlow preenche essa lacuna com foco exclusivo no modal sobre trilhos, contando também com uma rede colaborativa onde os próprios usuários reportam alertas de linhas e vagões[cite: 7].
-                    </p>
-                </section>
-
-                {/* Seção RoadMap */}
-                <section className="flex flex-col gap-[5rem] mt-[4rem] bg-[var(--secondary-dark)] text-[var(--bg-dark)] border-[4px] border-[var(--primary)] p-[2rem] min-[426px]:p-[5rem] rounded-[4rem]">
-                    <h2 className="text-[2.5rem] min-[426px]:text-[length:var(--titulo-main)] font-[var(--fonte-texto)] font-normal underline decoration-[var(--secondary)] text-center">
-                        RoadMap
-                    </h2>
-                    {/* <img className="p-0 m-0 w-full h-auto block" src={demostracao} alt="Fluxo de funcionamento do FluxFlow" />*/}
-                </section>
-                
-                <div className="flex justify-center my-8">
-                    <Button navegacao="/sistema2" texto="Conheça Mais" />
-                </div>
-
+            {/* CTA Final */}
+            <div className="flex justify-center pt-4">
+            <Button navegacao="/sistema2" texto="Conheça Mais" />
             </div>
+
+        </div>
         </main>
     );
-}
+    }
