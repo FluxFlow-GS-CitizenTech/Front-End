@@ -1,6 +1,6 @@
     import Button from "../../Components/Button/Button";
     import Card from "../../Components/Card/Card";
-    {/* import demostracao from "../../img/Demonstração de funcionamento da Plataforma.png"; */}
+    import demostracao from "../../img/rondmap.png";
     import imgFundo from "../../img/fundo3.jpg";
 
     export default function Sobre() {
@@ -84,21 +84,17 @@
                 Acompanhamento estruturado das etapas de desenvolvimento, prototipação e validação da plataforma FluxFlow.
             </p>
 
-            {/* Espaço reservado elegante enquanto a imagem está comentada */}
-            <div className="w-full max-w-[80rem] h-[22rem] sm:h-[26rem] rounded-[2rem] border-2 border-dashed border-white/35 bg-black/15 flex flex-col items-center justify-center gap-3 p-6 text-center">
-                <span className="text-[1.6rem] sm:text-[1.8rem] font-bold text-white/90">
-                RoadMap / Diagrama de Funcionamento
-                </span>
-                <span className="text-[1.4rem] text-white/70 max-w-[46rem]">
-                Espaço reservado para o infográfico ou print de demonstração da plataforma.
-                </span>
+            
+            <div className="w-full max-w-[92rem] mt-4 p-2 bg-black/20 rounded-[2.4rem] border-2 border-white/20 shadow-xl overflow-hidden">
+                <img 
+                className="w-full h-auto object-contain rounded-[2rem]" 
+                src={demostracao} 
+                alt="RoadMap e Fluxo de Funcionamento do FluxFlow" 
+                />
             </div>
-
-            {/* Imagem comentada conforme solicitação */}
-            {/* <img className="p-0 m-0 w-full h-auto block rounded-2xl" src={demostracao} alt="Fluxo de funcionamento do FluxFlow" /> */}
             </section>
             
-            {/* CTA Final */}
+            
             <div className="flex justify-center pt-4">
             <Button navegacao="/sistema2" texto="Conheça Mais" />
             </div>
