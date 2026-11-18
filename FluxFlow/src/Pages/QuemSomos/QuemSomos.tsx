@@ -1,4 +1,4 @@
-    import giovanni from "../../img/IMG-20260328-WA0007.jpg";
+import giovanni from "../../img/IMG-20260328-WA0007.jpg";
     import raphael from "../../img/3x4 Raphael Gomes.jpeg";
     import felipe from "../../img/image.png";
     import linkedin from "../../img/linkedin_logo.png";
@@ -10,6 +10,7 @@
     interface MembroEquipe {
     nome: string;
     rm: string;
+    sala: string;
     foto: string;
     alt: string;
     depoimento: string;
@@ -22,6 +23,7 @@
     {
         nome: "Giovanni Zorzetto",
         rm: "RM569464",
+        sala: "1TDSPH",
         foto: giovanni,
         alt: "Desenvolvedor FluxFlow - Giovanni Zorzetto",
         depoimento:
@@ -33,6 +35,7 @@
     {
         nome: "Raphael Gomes",
         rm: "RM572637",
+        sala: "1TDSPH",
         foto: raphael,
         alt: "Desenvolvedor FluxFlow - Raphael Gomes",
         depoimento:
@@ -44,6 +47,7 @@
     {
         nome: "Felipe Lima",
         rm: "RM569947",
+        sala: "1TDSPH",
         foto: felipe,
         alt: "Desenvolvedor FluxFlow - Felipe Lima",
         depoimento:
@@ -142,11 +146,16 @@
                         “{membro.depoimento}”
                     </p>
 
-                    {/* Rodapé do Card: RM + Redes Sociais */}
+                    {/* Rodapé do Card: RM + Sala + Redes Sociais */}
                     <div className="flex items-center justify-center sm:justify-between flex-wrap gap-6 pt-6 border-t border-[var(--bg-dark)]">
-                        <span className="px-5 py-2 rounded-[1rem] bg-[var(--bg-dark)] text-[var(--primary-dark)] font-[var(--fonte-texto)] text-[1.6rem] md:text-[1.8rem] font-extrabold tracking-wide">
-                        {membro.rm}
-                        </span>
+                        <div className="flex items-center gap-3">
+                            <span className="px-5 py-2 rounded-[1rem] bg-[var(--bg-dark)] text-[var(--primary-dark)] font-[var(--fonte-texto)] text-[1.6rem] md:text-[1.8rem] font-extrabold tracking-wide">
+                            {membro.rm}
+                            </span>
+                            <span className="px-5 py-2 rounded-[1rem] bg-[var(--primary-dark)] text-white font-[var(--fonte-texto)] text-[1.6rem] md:text-[1.8rem] font-extrabold tracking-wide">
+                            {membro.sala}
+                            </span>
+                        </div>
 
                         <div className="flex items-center gap-4">
                         <a

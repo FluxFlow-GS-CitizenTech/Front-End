@@ -33,16 +33,6 @@ interface StatusOperacional {
     dsOrigem?: string;
 }
 
-const getCookie = (name: string): string | undefined => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift();
-};
-
-const deleteCookie = (name: string) => {
-    document.cookie = `${name}=; path=/; max-age=0;`;
-};
-
 export function Principal() {
     const navigate = useNavigate();
 
@@ -80,31 +70,39 @@ export function Principal() {
 
     const API_URL = "https://api-fluxflow.onrender.com/fluxflow";
 
-    const getHeaders = () => {
-        const token = getCookie('authToken') || getCookie('token') || getCookie('access_token') || localStorage.getItem('authToken') || localStorage.getItem('token');
+    // A API utiliza sessão HTTP (JSESSIONID), não JWT/Bearer Token.
+    // credentials: 'include' faz o navegador enviar o cookie HttpOnly automaticamente.
+    const getHeaders = () => ({
+        'Content-Type': 'application/json'
+    });
 
-        return {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        };
-    };
+    const apiFetch = (url: string, options: RequestInit = {}) => fetch(url, {
+        ...options,
+        credentials: 'include',
+        headers: {
+            ...getHeaders(),
+            ...((options.headers || {}) as Record<string, string>)
+        }
+    });
 
     const carregarDadosIniciais = async () => {
         try {
             const headers = getHeaders();
             const [resUser, resLinhas, resEstacoes, resStatus] = await Promise.all([
-                fetch(`${API_URL}/usuario`, { headers }),
-                fetch(`${API_URL}/linha`, { headers }),
-                fetch(`${API_URL}/estacoes`, { headers }),
-                fetch(`${API_URL}/status-operacional`, { headers })
+                apiFetch(`${API_URL}/usuario`, { headers }),
+                apiFetch(`${API_URL}/linha`, { headers }),
+                apiFetch(`${API_URL}/estacoes`, { headers }),
+                apiFetch(`${API_URL}/status-operacional`, { headers })
             ]);
+
+            if (resUser.status === 401) {
+                navigate('/login');
+                return;
+            }
 
             if (resUser.ok) {
                 const listaUsuarios = await resUser.json();
                 setUsuarios(listaUsuarios);
-                if (!localStorage.getItem("userId") && listaUsuarios.length > 0) {
-                    localStorage.setItem("userId", listaUsuarios[0].idUsuario.toString());
-                }
             }
             if (resLinhas.ok) setLinhas(await resLinhas.json());
             if (resEstacoes.ok) setEstacoes(await resEstacoes.json());
@@ -115,25 +113,18 @@ export function Principal() {
     };
 
     useEffect(() => {
-        const token = getCookie('authToken') || getCookie('token') || getCookie('access_token') || localStorage.getItem('authToken') || localStorage.getItem('token');
-        if (!token) {
-            navigate('/login');
-            return;
-        }
+        // A sessão é validada pelo backend. O cookie JSESSIONID é HttpOnly,
+        // portanto não deve ser consultado via document.cookie/localStorage.
         carregarDadosIniciais();
     }, [navigate]);
 
     const handleLogout = async () => {
         try {
-            await fetch(`${API_URL}/usuario/logout`, { method: 'POST', headers: getHeaders() });
+            await apiFetch(`${API_URL}/usuario/logout`, { method: 'POST' });
         } catch (e) {
             console.error(e);
         } finally {
-            deleteCookie('authToken');
-            deleteCookie('token');
-            deleteCookie('access_token');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('token');
+            // O cookie JSESSIONID é HttpOnly; somente o servidor pode encerrar a sessão.
             localStorage.removeItem('userId');
             navigate('/login');
         }
@@ -146,7 +137,7 @@ export function Principal() {
         }
         setStatusUsuario({ tipo: 'info', texto: 'Consultando usuário...' });
         try {
-            const res = await fetch(`${API_URL}/usuario/${buscaIdUsuario}`, { headers: getHeaders() });
+            const res = await apiFetch(`${API_URL}/usuario/${buscaIdUsuario}`, { headers: getHeaders() });
             if (res.ok) {
                 setUsuarioBuscado(await res.json());
                 setStatusUsuario({ tipo: 'sucesso', texto: 'Usuário encontrado com sucesso!' });
@@ -177,7 +168,7 @@ export function Principal() {
                 payload.dsSenha = editSenha;
             }
 
-            const res = await fetch(`${API_URL}/usuario/${idParaAtualizar}`, {
+            const res = await apiFetch(`${API_URL}/usuario/${idParaAtualizar}`, {
                 method: 'PUT',
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
@@ -192,7 +183,7 @@ export function Principal() {
             } else if (res.status === 400) {
                 setStatusUsuario({ tipo: 'erro', texto: 'Erro 400: Dados inválidos ou ID incorreto.' });
             } else if (res.status === 401 || res.status === 403) {
-                setStatusUsuario({ tipo: 'erro', texto: 'Acesso negado: O ID informado na URL não corresponde ao usuário autenticado ou o token expirou.' });
+                setStatusUsuario({ tipo: 'erro', texto: 'Sessão não autenticada ou sem permissão. Faça login novamente e tente outra vez.' });
             } else {
                 setStatusUsuario({ tipo: 'erro', texto: `Erro ao atualizar. Status HTTP: ${res.status}` });
             }
@@ -204,7 +195,7 @@ export function Principal() {
     const handleExcluirUsuario = async (id?: number) => {
         if (!id || !confirm('Deseja excluir esta conta?')) return;
         try {
-            const res = await fetch(`${API_URL}/usuario/${id}`, { method: 'DELETE', headers: getHeaders() });
+            const res = await apiFetch(`${API_URL}/usuario/${id}`, { method: 'DELETE', headers: getHeaders() });
             if (res.ok || res.status === 204) {
                 setStatusUsuario({ tipo: 'sucesso', texto: 'Conta excluída com sucesso!' });
                 setUsuarioBuscado(null);
@@ -224,7 +215,7 @@ export function Principal() {
         }
         setStatusLinha({ tipo: 'info', texto: 'Buscando linha...' });
         try {
-            const res = await fetch(`${API_URL}/linha/${buscaIdLinha}`, { headers: getHeaders() });
+            const res = await apiFetch(`${API_URL}/linha/${buscaIdLinha}`, { headers: getHeaders() });
             if (res.ok) {
                 setLinhaBuscada(await res.json());
                 setStatusLinha({ tipo: 'sucesso', texto: 'Linha localizada com sucesso!' });
@@ -245,8 +236,8 @@ export function Principal() {
         setStatusEstacao({ tipo: 'info', texto: 'Consultando estação e vínculos...' });
         try {
             const [resEst, resLinhasEst] = await Promise.all([
-                fetch(`${API_URL}/estacoes/${buscaIdEstacao}`, { headers: getHeaders() }),
-                fetch(`${API_URL}/estacoes/${buscaIdEstacao}/linhas`, { headers: getHeaders() })
+                apiFetch(`${API_URL}/estacoes/${buscaIdEstacao}`, { headers: getHeaders() }),
+                apiFetch(`${API_URL}/estacoes/${buscaIdEstacao}/linhas`, { headers: getHeaders() })
             ]);
             if (resEst.ok) {
                 setEstacaoBuscada(await resEst.json());
@@ -269,7 +260,7 @@ export function Principal() {
         setResultadoPrevisaoDemanda(null);
         try {
             const url = `${API_URL}/previsoes-lotacao?dataPrevisao=${formPrevisao.dataPrevisao}&hora=${formPrevisao.hora}&idEstacao=${formPrevisao.idEstacao}&idLinha=${formPrevisao.idLinha}`;
-            const res = await fetch(url, { method: 'POST', headers: getHeaders() });
+            const res = await apiFetch(url, { method: 'POST', headers: getHeaders() });
             if (res.ok) {
                 const data = await res.json();
                 setResultadoPrevisaoDemanda(data);
@@ -293,7 +284,7 @@ export function Principal() {
                 if (rotaForm.hora !== '') url += `&hora=${rotaForm.hora}`;
             }
 
-            const res = await fetch(url, { headers: getHeaders() });
+            const res = await apiFetch(url, { headers: getHeaders() });
             if (res.ok) {
                 const data = await res.json();
                 setResultadoRota(data);
