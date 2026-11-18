@@ -26,27 +26,53 @@
         setSucesso(false);
 
         try {
-        // Endpoint de login da API FluxFlow
         const response = await fetch("https://api-fluxflow.onrender.com/fluxflow/usuario/login", {
             method: "POST",
             headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             },
             credentials: "include",
-            body: JSON.stringify(data),
+            body: JSON.stringify({
+            dsEmail: data.dsEmail.trim(),
+            dsSenha: data.dsSenha
+            }),
         });
 
-        if (response.status === 200) {
-            // Cria um token temporário para liberar o acesso ao painel Principal
-            const tokenFicticio = "token_temporario_fluxflow_123456";
-            document.cookie = `token=${tokenFicticio}; path=/; max-age=86400; secure; samesite=lax`;
-            localStorage.setItem("token", tokenFicticio);
+        const responseText = await response.text();
+        let resData: any = {};
+        
+        try {
+            resData = JSON.parse(responseText);
+        } catch {
+            resData = responseText;
+        }
+
+        if (response.ok) {
+            let token = '';
+            if (typeof resData === 'string') {
+                token = resData;
+            } else {
+                token = resData.token || resData.accessToken || resData.access_token || resData.jwt || resData.key;
+            }
+
+            if (!token) {
+                token = responseText;
+            }
+
+            // Salva o token unificado nos cookies e localStorage
+            document.cookie = `authToken=${token}; path=/; max-age=86400; SameSite=Lax`;
+            localStorage.setItem("authToken", token);
+            localStorage.setItem("token", token);
+
+            if (resData?.idUsuario) {
+            localStorage.setItem("userId", resData.idUsuario);
+            }
 
             setSucesso(true);
-            // Redireciona para o painel principal após login bem-sucedido
             setTimeout(() => {
             navigate("/principal");
-            }, 1500);
+            }, 1200);
         } else if (response.status === 401) {
             setErroApi("E-mail ou senha inválidos. Verifique suas credenciais.");
         } else {
@@ -60,7 +86,6 @@
 
     return (
         <main className="conteudo flex flex-col items-center pb-24">
-        {/* HERO SECTION */}
         <section
             className="relative w-full min-h-[75vh] md:min-h-[80vh] bg-cover bg-center bg-no-repeat border-b-[5px] border-[var(--secondary-dark)] flex items-center justify-center px-6 py-20"
             style={{
@@ -79,7 +104,6 @@
             </div>
         </section>
 
-        {/* SEÇÃO PRINCIPAL DO FORMULÁRIO */}
         <section className="w-[95%] max-w-[88rem] -mt-14 z-20 bg-[var(--primary)] rounded-[2.4rem] md:rounded-[3.2rem] p-6 sm:p-12 md:p-16 shadow-[0_20px_50px_rgba(0,51,102,0.25)] flex flex-col items-center gap-8">
             
             <form
@@ -87,7 +111,6 @@
             noValidate
             className="w-full bg-[var(--bg-primary)] p-8 sm:p-12 md:p-16 rounded-[2.4rem] border-2 border-[var(--secondary-dark)] shadow-[0_15px_40px_rgba(0,0,0,0.18)] flex flex-col gap-7"
             >
-            {/* Cabeçalho do Formulário */}
             <div className="flex flex-col items-center text-center gap-2 border-b border-[var(--bg-dark)] pb-6">
                 <h3 className="font-[var(--fonte-principal)] text-[2.4rem] md:text-[3rem] font-bold text-[var(--primary-dark)]">
                 Entrar na Plataforma
@@ -97,7 +120,6 @@
                 </p>
             </div>
 
-            {/* Alerta de Sucesso */}
             {sucesso && (
                 <div
                 role="alert"
@@ -112,7 +134,6 @@
                 </div>
             )}
 
-            {/* Alerta de Erro da API */}
             {erroApi && (
                 <div
                 role="alert"
@@ -127,7 +148,6 @@
                 </div>
             )}
 
-            {/* Campo E-mail */}
             <div className="flex flex-col gap-2">
                 <label
                 htmlFor="dsEmail"
@@ -161,7 +181,6 @@
                 )}
             </div>
 
-            {/* Campo Senha */}
             <div className="flex flex-col gap-2">
                 <label
                 htmlFor="dsSenha"
@@ -191,7 +210,6 @@
                 )}
             </div>
 
-            {/* Botão de Envio */}
             <button
                 type="submit"
                 disabled={isSubmitting}
@@ -204,7 +222,6 @@
                 {isSubmitting ? "Entrando..." : "Entrar"}
             </button>
 
-            {/* Link auxiliar para Cadastro */}
             <div className="text-center pt-4 border-t border-[var(--bg-dark)]">
                 <p className="font-[var(--fonte-texto)] text-[1.5rem] text-gray-600">
                 Ainda não tem uma conta?{" "}

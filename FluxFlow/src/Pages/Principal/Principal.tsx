@@ -33,7 +33,6 @@ interface StatusOperacional {
     dsOrigem?: string;
 }
 
-// Funções auxiliares para manipulação de cookies
 const getCookie = (name: string): string | undefined => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -47,54 +46,49 @@ const deleteCookie = (name: string) => {
 export function Principal() {
     const navigate = useNavigate();
 
-    // Estados Globais e de Usuários
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [buscaIdUsuario, setBuscaIdUsuario] = useState('');
     const [usuarioBuscado, setUsuarioBuscado] = useState<Usuario | null>(null);
     const [statusUsuario, setStatusUsuario] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
+    
     const [editandoId, setEditandoId] = useState<number | null>(null);
+    const [editIdInput, setEditIdInput] = useState('');
     const [editNome, setEditNome] = useState('');
     const [editEmail, setEditEmail] = useState('');
+    const [editSenha, setEditSenha] = useState('');
 
-    // Estados de Linhas
     const [linhas, setLinhas] = useState<Linha[]>([]);
     const [buscaIdLinha, setBuscaIdLinha] = useState('');
     const [linhaBuscada, setLinhaBuscada] = useState<Linha | null>(null);
     const [statusLinha, setStatusLinha] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
-    // Estados de Estações
     const [estacoes, setEstacoes] = useState<Estacao[]>([]);
     const [buscaIdEstacao, setBuscaIdEstacao] = useState('');
     const [estacaoBuscada, setEstacaoBuscada] = useState<Estacao | null>(null);
     const [linhasDaEstacao, setLinhasDaEstacao] = useState<any[]>([]);
     const [statusEstacao, setStatusEstacao] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
-    // Estados de Status Operacional
     const [ocorrencias, setOcorrencias] = useState<StatusOperacional[]>([]);
-    const [statusOcorrencia, setStatusOcorrencia] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
-    // Estados de Previsões de Lotação
     const [formPrevisao, setFormPrevisao] = useState({ dataPrevisao: '', hora: '', idEstacao: '', idLinha: '' });
     const [resultadoPrevisaoDemanda, setResultadoPrevisaoDemanda] = useState<any>(null);
     const [statusPrevisao, setStatusPrevisao] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
-    // Estados de Planejamento de Rotas
     const [rotaForm, setRotaForm] = useState({ origem: '', destino: '', criterio: 'BALDEACOES', data: '', hora: '' });
     const [resultadoRota, setResultadoRota] = useState<any>(null);
     const [statusRota, setStatusRota] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
-    // URL base oficial da API FluxFlow no Render
     const API_URL = "https://api-fluxflow.onrender.com/fluxflow";
 
     const getHeaders = () => {
-        const token = getCookie('token') || localStorage.getItem('token');
+        const token = getCookie('authToken') || getCookie('token') || getCookie('access_token') || localStorage.getItem('authToken') || localStorage.getItem('token');
+
         return {
             'Content-Type': 'application/json',
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         };
     };
 
-    // Carregamento inicial de dados essenciais
     const carregarDadosIniciais = async () => {
         try {
             const headers = getHeaders();
@@ -105,7 +99,13 @@ export function Principal() {
                 fetch(`${API_URL}/status-operacional`, { headers })
             ]);
 
-            if (resUser.ok) setUsuarios(await resUser.json());
+            if (resUser.ok) {
+                const listaUsuarios = await resUser.json();
+                setUsuarios(listaUsuarios);
+                if (!localStorage.getItem("userId") && listaUsuarios.length > 0) {
+                    localStorage.setItem("userId", listaUsuarios[0].idUsuario.toString());
+                }
+            }
             if (resLinhas.ok) setLinhas(await resLinhas.json());
             if (resEstacoes.ok) setEstacoes(await resEstacoes.json());
             if (resStatus.ok) setOcorrencias(await resStatus.json());
@@ -115,7 +115,7 @@ export function Principal() {
     };
 
     useEffect(() => {
-        const token = getCookie('token') || localStorage.getItem('token');
+        const token = getCookie('authToken') || getCookie('token') || getCookie('access_token') || localStorage.getItem('authToken') || localStorage.getItem('token');
         if (!token) {
             navigate('/login');
             return;
@@ -123,20 +123,22 @@ export function Principal() {
         carregarDadosIniciais();
     }, [navigate]);
 
-    // Logout
     const handleLogout = async () => {
         try {
             await fetch(`${API_URL}/usuario/logout`, { method: 'POST', headers: getHeaders() });
         } catch (e) {
             console.error(e);
         } finally {
+            deleteCookie('authToken');
             deleteCookie('token');
+            deleteCookie('access_token');
+            localStorage.removeItem('authToken');
             localStorage.removeItem('token');
+            localStorage.removeItem('userId');
             navigate('/login');
         }
     };
 
-    // CRUD Usuários
     const handleBuscarUsuarioPorId = async () => {
         if (!buscaIdUsuario) {
             setStatusUsuario({ tipo: 'erro', texto: 'Informe um ID de usuário válido.' });
@@ -157,19 +159,42 @@ export function Principal() {
         }
     };
 
-    const handleAtualizarUsuario = async (id: number) => {
+    const handleAtualizarUsuario = async () => {
+        const idParaAtualizar = editIdInput;
+        if (!idParaAtualizar) {
+            setStatusUsuario({ tipo: 'erro', texto: 'Informe o ID do usuário para alocar na URL (ex: 5).' });
+            return;
+        }
+
+        setStatusUsuario({ tipo: 'info', texto: `Atualizando dados do usuário ID ${idParaAtualizar}...` });
         try {
-            const res = await fetch(`${API_URL}/usuario/${id}`, {
+            const payload: any = { 
+                nmUsuario: editNome, 
+                dsEmail: editEmail 
+            };
+            
+            if (editSenha && editSenha.trim() !== '') {
+                payload.dsSenha = editSenha;
+            }
+
+            const res = await fetch(`${API_URL}/usuario/${idParaAtualizar}`, {
                 method: 'PUT',
                 headers: getHeaders(),
-                body: JSON.stringify({ nmUsuario: editNome, dsEmail: editEmail })
+                body: JSON.stringify(payload)
             });
-            if (res.ok || res.status === 204) {
-                setStatusUsuario({ tipo: 'sucesso', texto: 'Usuário atualizado com sucesso!' });
+
+            if (res.ok || res.status === 204 || res.status === 200) {
+                setStatusUsuario({ tipo: 'sucesso', texto: `Usuário ID ${idParaAtualizar} atualizado com sucesso!` });
                 setEditandoId(null);
+                setEditSenha('');
+                setEditIdInput('');
                 carregarDadosIniciais();
+            } else if (res.status === 400) {
+                setStatusUsuario({ tipo: 'erro', texto: 'Erro 400: Dados inválidos ou ID incorreto.' });
+            } else if (res.status === 401 || res.status === 403) {
+                setStatusUsuario({ tipo: 'erro', texto: 'Acesso negado: O ID informado na URL não corresponde ao usuário autenticado ou o token expirou.' });
             } else {
-                setStatusUsuario({ tipo: 'erro', texto: 'Erro ao atualizar usuário.' });
+                setStatusUsuario({ tipo: 'erro', texto: `Erro ao atualizar. Status HTTP: ${res.status}` });
             }
         } catch (e) { 
             setStatusUsuario({ tipo: 'erro', texto: 'Erro de conexão na atualização.' }); 
@@ -185,14 +210,13 @@ export function Principal() {
                 setUsuarioBuscado(null);
                 carregarDadosIniciais();
             } else {
-                setStatusUsuario({ tipo: 'erro', texto: 'Erro ao excluir conta.' });
+                setStatusUsuario({ tipo: 'erro', texto: 'Erro ao excluir conta (verifique se é o seu próprio ID).' });
             }
         } catch (e) { 
             setStatusUsuario({ tipo: 'erro', texto: 'Erro de conexão ao excluir.' }); 
         }
     };
 
-    // Consultar Linha por ID
     const handleBuscarLinhaPorId = async () => {
         if (!buscaIdLinha) {
             setStatusLinha({ tipo: 'erro', texto: 'Informe um ID de linha válido.' });
@@ -213,7 +237,6 @@ export function Principal() {
         }
     };
 
-    // Consultar Estação por ID e suas Linhas
     const handleBuscarEstacaoPorId = async () => {
         if (!buscaIdEstacao) {
             setStatusEstacao({ tipo: 'erro', texto: 'Informe um ID de estação válido.' });
@@ -240,7 +263,6 @@ export function Principal() {
         }
     };
 
-    // Calcular Previsão sob Demanda (POST /previsoes-lotacao)
     const handleCalcularPrevisao = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatusPrevisao({ tipo: 'info', texto: 'Calculando previsão sob demanda...' });
@@ -260,10 +282,9 @@ export function Principal() {
         }
     };
 
-    // Calcular Rota (GET /rotas)
     const handleCalcularRota = async (e: React.FormEvent) => {
         e.preventDefault();
-        setStatusRota({ tipo: 'info', texto: rotaForm.criterio === 'LOTACAO' ? 'Processando rota por menor lotação... Pode levar alguns minutos.' : 'Calculando rota otimizada...' });
+        setStatusRota({ tipo: 'info', texto: rotaForm.criterio === 'LOTACAO' ? 'Processando rota por menor lotação...' : 'Calculando rota otimizada...' });
         setResultadoRota(null);
         try {
             let url = `${API_URL}/rotas?origem=${rotaForm.origem}&destino=${rotaForm.destino}&criterio=${rotaForm.criterio}`;
@@ -285,7 +306,6 @@ export function Principal() {
         }
     };
 
-    // Renderizador auxiliar de Status para as Sections
     const renderStatusBox = (status: { tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null) => {
         if (!status) return null;
         const cores = {
@@ -302,8 +322,6 @@ export function Principal() {
 
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] font-[var(--fonte-texto)] text-[var(--text-main)] pb-24">
-            
-            {/* TOP BAR / HEADER RESPONSIVO */}
             <header className="bg-[var(--primary-dark)] border-b-[4px] border-[var(--secondary)] px-4 sm:px-12 py-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-50">
                 <div className="flex items-center gap-4 text-center sm:text-left">
                     <div className="w-5 h-5 bg-[var(--secondary)] rounded-full animate-pulse shrink-0" />
@@ -323,8 +341,6 @@ export function Principal() {
             </header>
 
             <main className="max-w-[124rem] mx-auto px-4 sm:px-8 mt-8 sm:mt-12 space-y-8 sm:space-y-12">
-
-                {/* BLOCO 1: PLANEJAMENTO DE ROTAS */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4">
                         <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
@@ -355,7 +371,7 @@ export function Principal() {
                             <>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[1.4rem] font-bold">Data (AAAA-MM-DD)</label>
-                                    <input type="date" value={rotaForm.data} onChange={e => setRotaForm({...rotaForm, data: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
+                                    <input type="text" value={rotaForm.data} onChange={e => setRotaForm({...rotaForm, data: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-[1.4rem] font-bold">Hora (0-23)</label>
@@ -388,7 +404,6 @@ export function Principal() {
                     )}
                 </section>
 
-                {/* BLOCO 2: LINHAS */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
@@ -427,7 +442,6 @@ export function Principal() {
                     </div>
                 </section>
 
-                {/* BLOCO 3: ESTAÇÕES E VÍNCULOS */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
@@ -477,7 +491,6 @@ export function Principal() {
                     </div>
                 </section>
 
-                {/* BLOCO 4: STATUS OPERACIONAL */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4">
                         <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
@@ -500,7 +513,6 @@ export function Principal() {
                     </div>
                 </section>
 
-                {/* BLOCO 5: PREVISÕES DE LOTAÇÃO */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4">
                         <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
@@ -512,7 +524,7 @@ export function Principal() {
                     <form onSubmit={handleCalcularPrevisao} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 rounded-[1.8rem] border">
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">Data (AAAA-MM-DD)</label>
-                            <input type="date" required value={formPrevisao.dataPrevisao} onChange={e => setFormPrevisao({...formPrevisao, dataPrevisao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
+                            <input type="text" required value={formPrevisao.dataPrevisao} onChange={e => setFormPrevisao({...formPrevisao, dataPrevisao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">Hora (0-23)</label>
@@ -545,7 +557,6 @@ export function Principal() {
                     )}
                 </section>
 
-                {/* BLOCO 6: GERENCIAMENTO DE USUÁRIOS */}
                 <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
                     <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
@@ -582,11 +593,19 @@ export function Principal() {
                                 <div key={u.idUsuario} className="border border-gray-200 rounded-[2rem] p-5 bg-slate-50 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     {editandoId === u.idUsuario ? (
                                         <div className="flex-1 space-y-3 w-full">
+                                            <input 
+                                                type="number" 
+                                                value={editIdInput} 
+                                                onChange={e => setEditIdInput(e.target.value)} 
+                                                placeholder="Digite o seu ID exato (Ex: 5)" 
+                                                className="w-full bg-white border-2 border-emerald-500 p-3 rounded-xl text-[1.5rem] font-bold" 
+                                            />
                                             <input type="text" value={editNome} onChange={e => setEditNome(e.target.value)} placeholder="Novo Nome" className="w-full bg-white border-2 border-gray-300 p-3 rounded-xl text-[1.5rem]" />
                                             <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Novo E-mail" className="w-full bg-white border-2 border-gray-300 p-3 rounded-xl text-[1.5rem]" />
+                                            <input type="password" value={editSenha} onChange={e => setEditSenha(e.target.value)} placeholder="Nova Senha" className="w-full bg-white border-2 border-gray-300 p-3 rounded-xl text-[1.5rem]" />
                                             <div className="flex gap-2">
-                                                <button onClick={() => handleAtualizarUsuario(u.idUsuario!)} className="px-5 py-2.5 bg-emerald-600 text-white text-[1.4rem] font-bold rounded-xl cursor-pointer">Salvar</button>
-                                                <button onClick={() => setEditandoId(null)} className="px-5 py-2.5 bg-gray-200 text-gray-700 text-[1.4rem] font-bold rounded-xl cursor-pointer">Cancelar</button>
+                                                <button onClick={handleAtualizarUsuario} className="px-5 py-2.5 bg-emerald-600 text-white text-[1.4rem] font-bold rounded-xl cursor-pointer">Salvar na URL</button>
+                                                <button onClick={() => { setEditandoId(null); setEditSenha(''); setEditIdInput(''); }} className="px-5 py-2.5 bg-gray-200 text-gray-700 text-[1.4rem] font-bold rounded-xl cursor-pointer">Cancelar</button>
                                             </div>
                                         </div>
                                     ) : (
@@ -599,7 +618,7 @@ export function Principal() {
 
                                     <div className="flex gap-2 self-end sm:self-center">
                                         {editandoId !== u.idUsuario && (
-                                            <button onClick={() => { setEditandoId(u.idUsuario!); setEditNome(u.nmUsuario || ''); setEditEmail(u.dsEmail || ''); }} className="px-4 py-2 bg-sky-50 text-sky-600 text-[1.4rem] font-bold rounded-xl border border-sky-200 cursor-pointer">Editar</button>
+                                            <button onClick={() => { setEditandoId(u.idUsuario!); setEditIdInput(u.idUsuario?.toString() || localStorage.getItem('userId') || ''); setEditNome(u.nmUsuario || ''); setEditEmail(u.dsEmail || ''); setEditSenha(''); }} className="px-4 py-2 bg-sky-50 text-sky-600 text-[1.4rem] font-bold rounded-xl border border-sky-200 cursor-pointer">Editar</button>
                                         )}
                                         <button onClick={() => handleExcluirUsuario(u.idUsuario)} className="px-4 py-2 bg-red-50 text-red-600 text-[1.4rem] font-bold rounded-xl border border-red-200 cursor-pointer">Excluir</button>
                                     </div>
@@ -608,7 +627,6 @@ export function Principal() {
                         </div>
                     )}
                 </section>
-
             </main>
         </div>
     );

@@ -1,5 +1,5 @@
-    // import uplode from "../../img/UploadPage.png";
-    // import rankig from "../../img/Protótipo Ranking.png";
+    import relatorios from "../../img/relatorios.png";
+    import rotasStatus from "../../img/rotas.png";
     import Button from "../../Components/Button/Button";
     import Card from "../../Components/Card/Card";
     import imgFundo from "../../img/fundo3.jpg";
@@ -56,24 +56,13 @@
                 </span>
             </div>
 
-            {/* Imagem comentada conforme solicitação */}
-            {/* 
+            
             <img
                 className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
-                src={rankig}
+                src={rotasStatus}
                 alt="Protótipo Rotas e Status"
             /> 
-            */}
-
-            {/* Espaço reservado elegante enquanto a imagem está comentada */}
-            <div className="w-full max-w-[76rem] h-[22rem] sm:h-[26rem] rounded-[2rem] border-2 border-dashed border-white/35 bg-black/15 flex flex-col items-center justify-center gap-3 p-6 text-center mt-2">
-                <span className="text-[1.6rem] sm:text-[1.8rem] font-bold text-white/90">
-                Protótipo: Rotas e Status das Linhas
-                </span>
-                <span className="text-[1.4rem] text-white/70 max-w-[44rem]">
-                Espaço reservado para a tela de visualização de status em tempo real e comparação de trajetos.
-                </span>
-            </div>
+            
             </section>
 
             {/* Seção 2: Protótipo HeatMap e Dados Colaborativos */}
@@ -103,24 +92,11 @@
                 </span>
             </div>
 
-            {/* Imagem comentada conforme solicitação */}
-            {/* 
             <img
                 className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
-                src={uplode}
+                src={relatorios}
                 alt="Protótipo HeatMap e Colaboração"
             /> 
-            */}
-
-            {/* Espaço reservado elegante enquanto a imagem está comentada */}
-            <div className="w-full max-w-[76rem] h-[22rem] sm:h-[26rem] rounded-[2rem] border-2 border-dashed border-white/35 bg-black/15 flex flex-col items-center justify-center gap-3 p-6 text-center mt-2">
-                <span className="text-[1.6rem] sm:text-[1.8rem] font-bold text-white/90">
-                Protótipo: HeatMap e Relatórios
-                </span>
-                <span className="text-[1.4rem] text-white/70 max-w-[44rem]">
-                Espaço reservado para a tela de mapa de calor de lotação e envio rápido de ocorrências.
-                </span>
-            </div>
             </section>
 
             {/* CTA Final */}

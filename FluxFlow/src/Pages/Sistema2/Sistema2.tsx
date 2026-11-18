@@ -1,6 +1,10 @@
     import Button from "../../Components/Button/Button";
     import Card from "../../Components/Card/Card";
     import imgFundo from "../../img/fundo3.jpg";
+    import impacto from "../../img/impacto.png";
+    import dados from "../../img/dados.png";
+    import planejamento from "../../img/planejamento.png";
+    import mapaFluxo from "../../img/mapa.png";
 
     export default function Sistema2() {
     return (
@@ -57,8 +61,11 @@
                 ))}
             </ol>
 
-            {/* Imagem comentada conforme solicitação */}
-            {/* <img className="rounded-[2.4rem] p-0" src={imgIa} alt="tabela avaliação" /> */}
+            <img
+                className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
+                src={impacto}
+                alt="Impacto na Mobilidade"
+            /> 
             </section>
 
             {/* Seção II */}
@@ -93,8 +100,11 @@
                 ))}
             </ol>
 
-            {/* Imagem comentada conforme solicitação */}
-            {/* <img className="rounded-[2.4rem] p-0" src={imgConfi} alt="tabela avaliação" /> */}
+            <img
+                className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
+                src={dados}
+                alt="Impacto na Mobilidade"
+            /> 
             </section>
 
             {/* Seção III */}
@@ -126,8 +136,11 @@
                 ))}
             </ol>
 
-            {/* Imagem comentada conforme solicitação */}
-            {/* <img className="rounded-[2.4rem] p-0" src={imgFi} alt="tabela avaliação" /> */}
+            <img
+                className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
+                src={planejamento}
+                alt="Impacto na Mobilidade"
+            /> 
             </section>
 
             {/* Grid 3 Colunas para as Seções IV, V e VI (Deixa a leitura muito mais leve e dinâmica) */}
@@ -145,8 +158,7 @@
                     Nem toda linha ou estação possui o mesmo nível de criticidade ou fluxo.
                 </p>
                 </div>
-                {/* Imagem comentada conforme solicitação */}
-                {/* <img className="rounded-[2.4rem] p-0" src={imgDa} alt="tabela avaliação" /> */}
+                
             </section>
 
             {/* Seção V */}
@@ -162,8 +174,7 @@
                     O sistema incentiva a colaboração coletiva entre os passageiros.
                 </p>
                 </div>
-                {/* Imagem comentada conforme solicitação */}
-                {/* <img className="rounded-[2.4rem] p-0" src={imgBi} alt="tabela avaliação" /> */}
+                
             </section>
 
             {/* Seção VI */}
@@ -179,8 +190,7 @@
                     Essencial para garantir a precisão dos alertas colaborativos.
                 </p>
                 </div>
-                {/* Imagem comentada conforme solicitação */}
-                {/* <img className="rounded-[2.4rem] p-0" src={imgPaf} alt="tabela avaliação" /> */}
+        
             </section>
             </div>
 
@@ -198,18 +208,11 @@
                 Imagem de fluxo ilustrativo do sistema de rotas e lotação.
             </p>
 
-            {/* Espaço reservado elegante enquanto a imagem está comentada */}
-            <div className="w-full max-w-[80rem] h-[22rem] sm:h-[26rem] rounded-[2rem] border-2 border-dashed border-white/35 bg-black/15 flex flex-col items-center justify-center gap-3 p-6 text-center">
-                <span className="text-[1.6rem] sm:text-[1.8rem] font-bold text-white/90">
-                Diagrama: Fluxo de Dados Completo
-                </span>
-                <span className="text-[1.4rem] text-white/70 max-w-[46rem]">
-                Espaço reservado para o fluxograma ilustrativo de processamento de rotas e lotação.
-                </span>
-            </div>
-
-            {/* Imagem comentada conforme solicitação */}
-            {/* <img className="rounded-[2.4rem] p-0" src={imgFc} alt="tabela avaliação" /> */}
+            <img
+                className="rounded-2xl p-0 max-w-[90%] max-h-[80vh] w-auto h-auto block mx-auto object-contain"
+                src={mapaFluxo}
+                alt="Impacto na Mobilidade"
+            /> 
             </section>
 
             {/* Navegação de Rodapé da Página */}
