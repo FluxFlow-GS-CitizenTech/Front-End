@@ -69,6 +69,15 @@
                 Contato
                 </Link>
             </li>
+            {/* BOTÃO DE LOGIN (DESKTOP) */}
+            <li>
+                <Link
+                to="/login"
+                className="font-[var(--fonte-texto)] text-[1.6rem] font-semibold text-[var(--bg-primary)] bg-[var(--secondary)] px-5 py-2.5 rounded-xl transition-all duration-300 hover:opacity-90 shadow-sm"
+                >
+                Entrar
+                </Link>
+            </li>
             </ul>
 
             {/* BOTÃO HAMBURGUER (MOBILE) */}
@@ -95,10 +104,10 @@
             />
             </button>
 
-            {/* MENU DROPDOWN MOBILE (Com animação e fechamento ao clicar) */}
+            
             <div
             className={`absolute top-[8rem] left-0 w-full bg-[var(--primary-dark)] border-b-4 border-[var(--secondary)] shadow-2xl transition-all duration-300 ease-in-out md:hidden overflow-hidden ${
-                menuAberto ? "max-h-[42rem] py-6 opacity-100" : "max-h-0 py-0 opacity-0"
+                menuAberto ? "max-h-[48rem] py-6 opacity-100" : "max-h-0 py-0 opacity-0"
             }`}
             >
             <ul className="flex flex-col items-center gap-6 px-6 font-[var(--fonte-texto)] text-[1.8rem] font-semibold">
@@ -145,6 +154,16 @@
                     className="text-[var(--bg-primary)] hover:text-[var(--secondary)] transition-colors"
                 >
                     Contato
+                </Link>
+                </li>
+                {/* BOTÃO DE LOGIN (MOBILE) */}
+                <li className="w-full pt-2">
+                <Link
+                    to="/login"
+                    onClick={fecharMenu}
+                    className="block text-center text-[var(--bg-primary)] bg-[var(--secondary)] py-3 rounded-xl transition-all duration-300 hover:opacity-90 w-full"
+                >
+                    Entrar / Login
                 </Link>
                 </li>
             </ul>
