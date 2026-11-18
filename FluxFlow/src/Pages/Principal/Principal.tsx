@@ -33,15 +33,6 @@ interface StatusOperacional {
     dsOrigem?: string;
 }
 
-interface PrevisaoLotacao {
-    idPrevisao?: number;
-    dsClassificacao?: string;
-    dsModeloUtilizado?: string;
-    dtPrevisao?: string;
-    vlHoraReferencia?: number;
-    vlIndiceLotacao?: number;
-}
-
 // Funções auxiliares para manipulação de cookies
 const getCookie = (name: string): string | undefined => {
     const value = `; ${document.cookie}`;
@@ -56,10 +47,11 @@ const deleteCookie = (name: string) => {
 export function Principal() {
     const navigate = useNavigate();
 
-    // Estados de Usuários
+    // Estados Globais e de Usuários
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [buscaIdUsuario, setBuscaIdUsuario] = useState('');
     const [usuarioBuscado, setUsuarioBuscado] = useState<Usuario | null>(null);
+    const [statusUsuario, setStatusUsuario] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
     const [editandoId, setEditandoId] = useState<number | null>(null);
     const [editNome, setEditNome] = useState('');
     const [editEmail, setEditEmail] = useState('');
@@ -68,27 +60,28 @@ export function Principal() {
     const [linhas, setLinhas] = useState<Linha[]>([]);
     const [buscaIdLinha, setBuscaIdLinha] = useState('');
     const [linhaBuscada, setLinhaBuscada] = useState<Linha | null>(null);
+    const [statusLinha, setStatusLinha] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
     // Estados de Estações
     const [estacoes, setEstacoes] = useState<Estacao[]>([]);
     const [buscaIdEstacao, setBuscaIdEstacao] = useState('');
     const [estacaoBuscada, setEstacaoBuscada] = useState<Estacao | null>(null);
     const [linhasDaEstacao, setLinhasDaEstacao] = useState<any[]>([]);
+    const [statusEstacao, setStatusEstacao] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
     // Estados de Status Operacional
     const [ocorrencias, setOcorrencias] = useState<StatusOperacional[]>([]);
+    const [statusOcorrencia, setStatusOcorrencia] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
     // Estados de Previsões de Lotação
-    const [previsoes, setPrevisoes] = useState<PrevisaoLotacao[]>([]);
     const [formPrevisao, setFormPrevisao] = useState({ dataPrevisao: '', hora: '', idEstacao: '', idLinha: '' });
     const [resultadoPrevisaoDemanda, setResultadoPrevisaoDemanda] = useState<any>(null);
+    const [statusPrevisao, setStatusPrevisao] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
     // Estados de Planejamento de Rotas
     const [rotaForm, setRotaForm] = useState({ origem: '', destino: '', criterio: 'BALDEACOES', data: '', hora: '' });
     const [resultadoRota, setResultadoRota] = useState<any>(null);
-
-    const [mensagem, setMensagem] = useState<{ tipo: 'sucesso' | 'erro'; texto: string } | null>(null);
-    const [carregando, setCarregando] = useState(false);
+    const [statusRota, setStatusRota] = useState<{ tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null>(null);
 
     // URL base oficial da API FluxFlow no Render
     const API_URL = "https://api-fluxflow.onrender.com/fluxflow";
@@ -103,30 +96,21 @@ export function Principal() {
 
     // Carregamento inicial de dados essenciais
     const carregarDadosIniciais = async () => {
-        setCarregando(true);
         try {
             const headers = getHeaders();
-            const [resUser, resLinhas, resEstacoes, resStatus, resPrevisoes] = await Promise.all([
+            const [resUser, resLinhas, resEstacoes, resStatus] = await Promise.all([
                 fetch(`${API_URL}/usuario`, { headers }),
                 fetch(`${API_URL}/linha`, { headers }),
                 fetch(`${API_URL}/estacoes`, { headers }),
-                fetch(`${API_URL}/status-operacional`, { headers }),
-                fetch(`${API_URL}/previsoes-lotacao`, { headers })
+                fetch(`${API_URL}/status-operacional`, { headers })
             ]);
 
             if (resUser.ok) setUsuarios(await resUser.json());
             if (resLinhas.ok) setLinhas(await resLinhas.json());
             if (resEstacoes.ok) setEstacoes(await resEstacoes.json());
             if (resStatus.ok) setOcorrencias(await resStatus.json());
-            if (resPrevisoes.ok) {
-                const dadosPrevisoes = await resPrevisoes.json();
-                // Limita a exibição inicial para evitar travar a tela (conforme nota da doc sobre volume de dados)
-                setPrevisoes(dadosPrevisoes.slice(0, 50)); 
-            }
         } catch (error) {
-            setMensagem({ tipo: 'erro', texto: 'Erro ao conectar com a API FluxFlow.' });
-        } finally {
-            setCarregando(false);
+            console.error("Erro ao conectar com a API FluxFlow.", error);
         }
     };
 
@@ -154,12 +138,23 @@ export function Principal() {
 
     // CRUD Usuários
     const handleBuscarUsuarioPorId = async () => {
-        if (!buscaIdUsuario) return;
+        if (!buscaIdUsuario) {
+            setStatusUsuario({ tipo: 'erro', texto: 'Informe um ID de usuário válido.' });
+            return;
+        }
+        setStatusUsuario({ tipo: 'info', texto: 'Consultando usuário...' });
         try {
             const res = await fetch(`${API_URL}/usuario/${buscaIdUsuario}`, { headers: getHeaders() });
-            if (res.ok) setUsuarioBuscado(await res.json());
-            else setUsuarioBuscado(null);
-        } catch (e) { console.error(e); }
+            if (res.ok) {
+                setUsuarioBuscado(await res.json());
+                setStatusUsuario({ tipo: 'sucesso', texto: 'Usuário encontrado com sucesso!' });
+            } else {
+                setUsuarioBuscado(null);
+                setStatusUsuario({ tipo: 'erro', texto: 'Usuário não encontrado.' });
+            }
+        } catch (e) {
+            setStatusUsuario({ tipo: 'erro', texto: 'Erro de conexão ao buscar usuário.' });
+        }
     };
 
     const handleAtualizarUsuario = async (id: number) => {
@@ -170,11 +165,15 @@ export function Principal() {
                 body: JSON.stringify({ nmUsuario: editNome, dsEmail: editEmail })
             });
             if (res.ok || res.status === 204) {
-                setMensagem({ tipo: 'sucesso', texto: 'Usuário atualizado com sucesso!' });
+                setStatusUsuario({ tipo: 'sucesso', texto: 'Usuário atualizado com sucesso!' });
                 setEditandoId(null);
                 carregarDadosIniciais();
+            } else {
+                setStatusUsuario({ tipo: 'erro', texto: 'Erro ao atualizar usuário.' });
             }
-        } catch (e) { setMensagem({ tipo: 'erro', texto: 'Erro ao atualizar usuário.' }); }
+        } catch (e) { 
+            setStatusUsuario({ tipo: 'erro', texto: 'Erro de conexão na atualização.' }); 
+        }
     };
 
     const handleExcluirUsuario = async (id?: number) => {
@@ -182,43 +181,69 @@ export function Principal() {
         try {
             const res = await fetch(`${API_URL}/usuario/${id}`, { method: 'DELETE', headers: getHeaders() });
             if (res.ok || res.status === 204) {
-                setMensagem({ tipo: 'sucesso', texto: 'Conta excluída com sucesso!' });
+                setStatusUsuario({ tipo: 'sucesso', texto: 'Conta excluída com sucesso!' });
                 setUsuarioBuscado(null);
                 carregarDadosIniciais();
+            } else {
+                setStatusUsuario({ tipo: 'erro', texto: 'Erro ao excluir conta.' });
             }
-        } catch (e) { setMensagem({ tipo: 'erro', texto: 'Erro ao excluir conta.' }); }
+        } catch (e) { 
+            setStatusUsuario({ tipo: 'erro', texto: 'Erro de conexão ao excluir.' }); 
+        }
     };
 
     // Consultar Linha por ID
     const handleBuscarLinhaPorId = async () => {
-        if (!buscaIdLinha) return;
+        if (!buscaIdLinha) {
+            setStatusLinha({ tipo: 'erro', texto: 'Informe um ID de linha válido.' });
+            return;
+        }
+        setStatusLinha({ tipo: 'info', texto: 'Buscando linha...' });
         try {
             const res = await fetch(`${API_URL}/linha/${buscaIdLinha}`, { headers: getHeaders() });
-            if (res.ok) setLinhaBuscada(await res.json());
-            else setLinhaBuscada(null);
-        } catch (e) { console.error(e); }
+            if (res.ok) {
+                setLinhaBuscada(await res.json());
+                setStatusLinha({ tipo: 'sucesso', texto: 'Linha localizada com sucesso!' });
+            } else {
+                setLinhaBuscada(null);
+                setStatusLinha({ tipo: 'erro', texto: 'Linha não encontrada.' });
+            }
+        } catch (e) {
+            setStatusLinha({ tipo: 'erro', texto: 'Erro de conexão ao buscar linha.' });
+        }
     };
 
     // Consultar Estação por ID e suas Linhas
     const handleBuscarEstacaoPorId = async () => {
-        if (!buscaIdEstacao) return;
+        if (!buscaIdEstacao) {
+            setStatusEstacao({ tipo: 'erro', texto: 'Informe um ID de estação válido.' });
+            return;
+        }
+        setStatusEstacao({ tipo: 'info', texto: 'Consultando estação e vínculos...' });
         try {
             const [resEst, resLinhasEst] = await Promise.all([
                 fetch(`${API_URL}/estacoes/${buscaIdEstacao}`, { headers: getHeaders() }),
                 fetch(`${API_URL}/estacoes/${buscaIdEstacao}/linhas`, { headers: getHeaders() })
             ]);
-            if (resEst.ok) setEstacaoBuscada(await resEst.json());
-            else setEstacaoBuscada(null);
+            if (resEst.ok) {
+                setEstacaoBuscada(await resEst.json());
+                setStatusEstacao({ tipo: 'sucesso', texto: 'Estação consultada com sucesso!' });
+            } else {
+                setEstacaoBuscada(null);
+                setStatusEstacao({ tipo: 'erro', texto: 'Estação não encontrada.' });
+            }
 
             if (resLinhasEst.ok) setLinhasDaEstacao(await resLinhasEst.json());
             else setLinhasDaEstacao([]);
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            setStatusEstacao({ tipo: 'erro', texto: 'Erro de conexão ao consultar estação.' });
+        }
     };
 
     // Calcular Previsão sob Demanda (POST /previsoes-lotacao)
     const handleCalcularPrevisao = async (e: React.FormEvent) => {
         e.preventDefault();
-        setCarregando(true);
+        setStatusPrevisao({ tipo: 'info', texto: 'Calculando previsão sob demanda...' });
         setResultadoPrevisaoDemanda(null);
         try {
             const url = `${API_URL}/previsoes-lotacao?dataPrevisao=${formPrevisao.dataPrevisao}&hora=${formPrevisao.hora}&idEstacao=${formPrevisao.idEstacao}&idLinha=${formPrevisao.idLinha}`;
@@ -226,21 +251,19 @@ export function Principal() {
             if (res.ok) {
                 const data = await res.json();
                 setResultadoPrevisaoDemanda(data);
-                setMensagem({ tipo: 'sucesso', texto: 'Previsão calculada com sucesso!' });
+                setStatusPrevisao({ tipo: 'sucesso', texto: 'Previsão calculada com sucesso!' });
             } else {
-                setMensagem({ tipo: 'erro', texto: 'Erro ao calcular previsão. Verifique os parâmetros.' });
+                setStatusPrevisao({ tipo: 'erro', texto: 'Erro ao calcular previsão. Verifique os parâmetros.' });
             }
         } catch (e) {
-            setMensagem({ tipo: 'erro', texto: 'Erro de conexão no cálculo de previsão.' });
-        } finally {
-            setCarregando(false);
+            setStatusPrevisao({ tipo: 'erro', texto: 'Erro de conexão no cálculo de previsão.' });
         }
     };
 
     // Calcular Rota (GET /rotas)
     const handleCalcularRota = async (e: React.FormEvent) => {
         e.preventDefault();
-        setCarregando(true);
+        setStatusRota({ tipo: 'info', texto: rotaForm.criterio === 'LOTACAO' ? 'Processando rota por menor lotação... Pode levar alguns minutos.' : 'Calculando rota otimizada...' });
         setResultadoRota(null);
         try {
             let url = `${API_URL}/rotas?origem=${rotaForm.origem}&destino=${rotaForm.destino}&criterio=${rotaForm.criterio}`;
@@ -249,107 +272,110 @@ export function Principal() {
                 if (rotaForm.hora !== '') url += `&hora=${rotaForm.hora}`;
             }
 
-            if (rotaForm.criterio === 'LOTACAO') {
-                setMensagem({ tipo: 'sucesso', texto: 'Processando rota por menor lotação... Isso pode levar de 3 a 5 minutos conforme documentação técnica.' });
-            }
-
             const res = await fetch(url, { headers: getHeaders() });
             if (res.ok) {
                 const data = await res.json();
                 setResultadoRota(data);
-                setMensagem({ tipo: 'sucesso', texto: 'Rota calculada com sucesso!' });
+                setStatusRota({ tipo: 'sucesso', texto: 'Rota calculada com sucesso!' });
             } else {
-                setMensagem({ tipo: 'erro', texto: 'Erro ao calcular rota. Verifique os IDs informados.' });
+                setStatusRota({ tipo: 'erro', texto: 'Erro ao calcular rota. Verifique os IDs informados.' });
             }
         } catch (e) {
-            setMensagem({ tipo: 'erro', texto: 'Erro de conexão ao calcular rota.' });
-        } finally {
-            setCarregando(false);
+            setStatusRota({ tipo: 'erro', texto: 'Erro de conexão ao calcular rota.' });
         }
+    };
+
+    // Renderizador auxiliar de Status para as Sections
+    const renderStatusBox = (status: { tipo: 'sucesso' | 'erro' | 'info'; texto: string } | null) => {
+        if (!status) return null;
+        const cores = {
+            sucesso: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+            erro: 'bg-red-50 border-red-300 text-red-800',
+            info: 'bg-sky-50 border-sky-300 text-sky-800'
+        };
+        return (
+            <div className={`p-4 rounded-xl border-2 text-[1.4rem] font-semibold mt-4 transition-all ${cores[status.tipo]}`}>
+                {status.texto}
+            </div>
+        );
     };
 
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] font-[var(--fonte-texto)] text-[var(--text-main)] pb-24">
             
-            {/* TOP BAR / HEADER EXCLUSIVO */}
-            <header className="bg-[var(--primary-dark)] border-b-[4px] border-[var(--secondary)] px-8 sm:px-16 py-8 shadow-md flex justify-between items-center sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-5 h-5 bg-[var(--secondary)] rounded-full animate-pulse" />
+            {/* TOP BAR / HEADER RESPONSIVO */}
+            <header className="bg-[var(--primary-dark)] border-b-[4px] border-[var(--secondary)] px-4 sm:px-12 py-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4 sticky top-0 z-50">
+                <div className="flex items-center gap-4 text-center sm:text-left">
+                    <div className="w-5 h-5 bg-[var(--secondary)] rounded-full animate-pulse shrink-0" />
                     <div>
-                        <h1 className="font-[var(--fonte-principal)] text-[3rem] font-bold tracking-tight text-[var(--bg-primary)]">
+                        <h1 className="font-[var(--fonte-principal)] text-[2.4rem] sm:text-[3rem] font-bold tracking-tight text-[var(--bg-primary)]">
                             Flux<span className="text-[var(--secondary)]">Flow</span>
                         </h1>
-                        <p className="text-[1.6rem] text-gray-200 font-semibold tracking-wider uppercase">Painel Operacional Central & Integração Total</p>
+                        <p className="text-[1.3rem] sm:text-[1.5rem] text-gray-200 font-semibold tracking-wider uppercase">Painel Operacional Central</p>
                     </div>
                 </div>
                 <button 
                     onClick={handleLogout} 
-                    className="px-6 py-3 bg-red-50 text-red-600 border-2 border-red-200 rounded-[1.4rem] font-bold text-[1.6rem] hover:bg-red-100 transition-all cursor-pointer shadow-sm"
+                    className="px-5 py-2.5 bg-red-50 text-red-600 border-2 border-red-200 rounded-[1.2rem] font-bold text-[1.4rem] sm:text-[1.6rem] hover:bg-red-100 transition-all cursor-pointer shadow-sm w-full sm:w-auto text-center"
                 >
                     Encerrar Sessão
                 </button>
             </header>
 
-            <main className="max-w-[124rem] mx-auto px-6 sm:px-10 mt-12 space-y-12">
+            <main className="max-w-[124rem] mx-auto px-4 sm:px-8 mt-8 sm:mt-12 space-y-8 sm:space-y-12">
 
-                {/* Feedback Toast */}
-                {mensagem && (
-                    <div className={`p-6 rounded-[1.6rem] text-[1.6rem] font-bold flex justify-between items-center shadow-xl border-2 ${mensagem.tipo === 'erro' ? 'bg-red-50 border-red-200 text-red-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
-                        <span>{carregando ? "Processando requisição na API..." : mensagem.texto}</span>
-                        <button onClick={() => setMensagem(null)} className="font-bold ml-4 cursor-pointer text-[2rem]">✕</button>
-                    </div>
-                )}
-
-                {/* BLOCO 1: PLANEJAMENTO DE ROTAS (GET /rotas) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="border-b border-gray-200 pb-5">
-                        <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                {/* BLOCO 1: PLANEJAMENTO DE ROTAS */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                        <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
                             🗺️ Planejamento de Rotas
                         </h2>
-                        <p className="text-[1.5rem] text-gray-600 mt-1">Calcule o melhor trajeto entre estações por Baldeações, Menor Número de Estações, Tempo ou Lotação[cite: 13].</p>
+                        <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Calcule o melhor trajeto entre estações por Baldeações, Estações, Tempo ou Lotação.</p>
                     </div>
 
-                    <form onSubmit={handleCalcularRota} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <form onSubmit={handleCalcularRota} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                         <div className="flex flex-col gap-2">
-                            <label className="text-[1.5rem] font-bold">ID Origem</label>
-                            <input type="number" required placeholder="Ex: 2" value={rotaForm.origem} onChange={e => setRotaForm({...rotaForm, origem: e.target.value})} className="p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.6rem]" />
+                            <label className="text-[1.4rem] font-bold">ID Origem</label>
+                            <input type="number" required placeholder="Ex: 2" value={rotaForm.origem} onChange={e => setRotaForm({...rotaForm, origem: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-[1.5rem] font-bold">ID Destino</label>
-                            <input type="number" required placeholder="Ex: 35" value={rotaForm.destino} onChange={e => setRotaForm({...rotaForm, destino: e.target.value})} className="p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.6rem]" />
+                            <label className="text-[1.4rem] font-bold">ID Destino</label>
+                            <input type="number" required placeholder="Ex: 35" value={rotaForm.destino} onChange={e => setRotaForm({...rotaForm, destino: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="text-[1.5rem] font-bold">Critério</label>
-                            <select value={rotaForm.criterio} onChange={e => setRotaForm({...rotaForm, criterio: e.target.value})} className="p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.6rem]">
-                                <option value="BALDEACOES">BALDEACOES[cite: 13]</option>
-                                <option value="ESTACOES">ESTACOES[cite: 13]</option>
-                                <option value="TEMPO">TEMPO[cite: 13]</option>
+                            <label className="text-[1.4rem] font-bold">Critério</label>
+                            <select value={rotaForm.criterio} onChange={e => setRotaForm({...rotaForm, criterio: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]">
+                                <option value="BALDEACOES">BALDEACOES</option>
+                                <option value="ESTACOES">ESTACOES</option>
+                                <option value="TEMPO">TEMPO</option>
                                 <option value="LOTACAO">LOTACAO (Demorado)</option>
                             </select>
                         </div>
                         {rotaForm.criterio === 'LOTACAO' && (
                             <>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[1.5rem] font-bold">Data (AAAA-MM-DD)</label>
-                                    <input type="date" value={rotaForm.data} onChange={e => setRotaForm({...rotaForm, data: e.target.value})} className="p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.6rem]" />
+                                    <label className="text-[1.4rem] font-bold">Data (AAAA-MM-DD)</label>
+                                    <input type="date" value={rotaForm.data} onChange={e => setRotaForm({...rotaForm, data: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[1.5rem] font-bold">Hora (0-23)</label>
-                                    <input type="number" min="0" max="23" value={rotaForm.hora} onChange={e => setRotaForm({...rotaForm, hora: e.target.value})} className="p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.6rem]" />
+                                    <label className="text-[1.4rem] font-bold">Hora (0-23)</label>
+                                    <input type="number" min="0" max="23" value={rotaForm.hora} onChange={e => setRotaForm({...rotaForm, hora: e.target.value})} className="p-3 sm:p-4 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] text-[1.5rem]" />
                                 </div>
                             </>
                         )}
                         <div className="md:col-span-5 flex justify-end">
-                            <button type="submit" disabled={carregando} className="px-8 py-4 bg-[var(--primary-dark)] text-white text-[1.6rem] font-bold rounded-[1.2rem] cursor-pointer hover:opacity-90">
-                                {carregando ? "Calculando Rota..." : "Calcular Rota"}
+                            <button type="submit" className="w-full sm:w-auto px-8 py-4 bg-[var(--primary-dark)] text-white text-[1.6rem] font-bold rounded-[1.2rem] cursor-pointer hover:opacity-90 shadow-md">
+                                Calcular Rota
                             </button>
                         </div>
                     </form>
 
+                    {renderStatusBox(statusRota)}
+
                     {resultadoRota && (
-                        <div className="mt-6 p-6 bg-slate-50 border-2 border-gray-200 rounded-[1.8rem] space-y-4">
+                        <div className="mt-4 p-6 bg-slate-50 border-2 border-gray-200 rounded-[1.8rem] space-y-4 overflow-x-auto">
                             <h3 className="text-[1.8rem] font-bold text-[var(--primary-dark)]">Resultado do Trajeto:</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[1.5rem]">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[1.4rem] sm:text-[1.5rem]">
                                 <p><strong>Total Trechos:</strong> {resultadoRota.totalTrechos}</p>
                                 <p><strong>Total Estações:</strong> {resultadoRota.totalEstações || resultadoRota.totalEstacoes}</p>
                                 <p><strong>Baldeações:</strong> {resultadoRota.totalBaldeacoes}</p>
@@ -362,82 +388,86 @@ export function Principal() {
                     )}
                 </section>
 
-                {/* BLOCO 2: LINHAS (GET /linha) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="border-b border-gray-200 pb-5 flex justify-between items-center">
+                {/* BLOCO 2: LINHAS */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                            <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
                                 🚇 Gerenciamento de Linhas
                             </h2>
-                            <p className="text-[1.5rem] text-gray-600 mt-1">Consulta e listagem oficial de linhas do Metrô e CPTM[cite: 5, 10].</p>
+                            <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Listagem oficial de linhas do Metrô e CPTM.</p>
                         </div>
-                        <div className="flex gap-2">
-                            <input type="number" placeholder="ID Linha" value={buscaIdLinha} onChange={e => setBuscaIdLinha(e.target.value)} className="p-3 bg-slate-50 border border-gray-300 rounded-xl text-[1.5rem] w-32" />
-                            <button onClick={handleBuscarLinhaPorId} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[1.5rem] font-bold cursor-pointer">Buscar</button>
+                        <div className="flex w-full sm:w-auto gap-2">
+                            <input type="number" placeholder="ID Linha" value={buscaIdLinha} onChange={e => setBuscaIdLinha(e.target.value)} className="p-3 bg-slate-50 border border-gray-300 rounded-xl text-[1.4rem] w-full sm:w-36" />
+                            <button onClick={handleBuscarLinhaPorId} className="px-5 py-3 bg-slate-900 text-white rounded-xl text-[1.4rem] font-bold cursor-pointer shrink-0">Buscar</button>
                         </div>
                     </div>
 
+                    {renderStatusBox(statusLinha)}
+
                     {linhaBuscada && (
-                        <div className="p-4 bg-slate-50 border rounded-xl text-[1.6rem]">
+                        <div className="p-4 bg-slate-50 border rounded-xl text-[1.5rem]">
                             <p><strong>ID:</strong> {linhaBuscada.idLinha} | <strong>Código:</strong> {linhaBuscada.dsCodigo} | <strong>Nome:</strong> {linhaBuscada.nmLinha} | <strong>Operador:</strong> {linhaBuscada.tpOperador}</p>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {linhas.map((l) => (
                             <div key={l.idLinha || l.dsCodigo} className="p-5 rounded-[1.6rem] bg-slate-50 border border-gray-200 flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center gap-3 mb-2">
-                                        <span className="w-4 h-4 rounded-full" style={{ backgroundColor: l.dsCor || '#005CA9' }} />
-                                        <span className="font-bold text-[1.8rem] text-[var(--primary-dark)]">{l.nmLinha}</span>
+                                        <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: l.dsCor || '#005CA9' }} />
+                                        <span className="font-bold text-[1.7rem] text-[var(--primary-dark)] truncate">{l.nmLinha}</span>
                                     </div>
                                     <p className="text-[1.4rem] text-gray-600">Operador: <span className="font-semibold">{l.tpOperador}</span></p>
-                                    <p className="text-[1.4rem] text-gray-600">Status: <span className="font-semibold">{l.stLinha}</span>[cite: 10]</p>
+                                    <p className="text-[1.4rem] text-gray-600">Status: <span className="font-semibold">{l.stLinha}</span></p>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </section>
 
-                {/* BLOCO 3: ESTAÇÕES E VÍNCULOS (GET /estacoes) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="border-b border-gray-200 pb-5 flex justify-between items-center">
+                {/* BLOCO 3: ESTAÇÕES E VÍNCULOS */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
-                                🚉 Consulta de Estações e Linhas
+                            <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                                🚉 Consulta de Estações
                             </h2>
-                            <p className="text-[1.5rem] text-gray-600 mt-1">Listagem de estações e verificação de linhas associadas[cite: 10].</p>
+                            <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Listagem de estações e verificação de linhas associadas.</p>
                         </div>
-                        <div className="flex gap-2">
-                            <input type="number" placeholder="ID Estação" value={buscaIdEstacao} onChange={e => setBuscaIdEstacao(e.target.value)} className="p-3 bg-slate-50 border border-gray-300 rounded-xl text-[1.5rem] w-32" />
-                            <button onClick={handleBuscarEstacaoPorId} className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[1.5rem] font-bold cursor-pointer">Consultar</button>
+                        <div className="flex w-full sm:w-auto gap-2">
+                            <input type="number" placeholder="ID Estação" value={buscaIdEstacao} onChange={e => setBuscaIdEstacao(e.target.value)} className="p-3 bg-slate-50 border border-gray-300 rounded-xl text-[1.4rem] w-full sm:w-36" />
+                            <button onClick={handleBuscarEstacaoPorId} className="px-5 py-3 bg-slate-900 text-white rounded-xl text-[1.4rem] font-bold cursor-pointer shrink-0">Consultar</button>
                         </div>
                     </div>
 
+                    {renderStatusBox(statusEstacao)}
+
                     {estacaoBuscada && (
-                        <div className="p-4 bg-slate-50 border rounded-xl text-[1.6rem] space-y-2">
-                            <p><strong>Estação:</strong> {estacaoBuscada.nmEstacao} (ID: {estacaoBuscada.idEstacao})[cite: 10]</p>
-                            <p><strong>Linhas Associadas (/linhas):</strong> {JSON.stringify(linhasDaEstacao)}[cite: 10]</p>
+                        <div className="p-4 bg-slate-50 border rounded-xl text-[1.5rem] space-y-2">
+                            <p><strong>Estação:</strong> {estacaoBuscada.nmEstacao} (ID: {estacaoBuscada.idEstacao})</p>
+                            <p><strong>Linhas Associadas:</strong> {JSON.stringify(linhasDaEstacao)}</p>
                         </div>
                     )}
 
                     <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse min-w-[400px]">
                             <thead>
-                                <tr className="border-b border-gray-200 text-gray-500 text-[1.5rem] font-bold uppercase tracking-wider">
-                                    <th className="py-4 px-6">ID</th>
-                                    <th className="py-4 px-6">Nome da Estação</th>
-                                    <th className="py-4 px-6">Situação</th>
+                                <tr className="border-b border-gray-200 text-gray-500 text-[1.4rem] font-bold uppercase tracking-wider">
+                                    <th className="py-3 px-4">ID</th>
+                                    <th className="py-3 px-4">Nome da Estação</th>
+                                    <th className="py-3 px-4">Situação</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-[1.7rem]">
+                            <tbody className="divide-y divide-gray-100 text-[1.5rem]">
                                 {estacoes.map((e) => (
                                     <tr key={e.idEstacao} className="hover:bg-slate-50">
-                                        <td className="py-4 px-6 font-bold">{e.idEstacao}</td>
-                                        <td className="py-4 px-6 font-bold text-[var(--primary-dark)]">{e.nmEstacao}</td>
-                                        <td className="py-4 px-6">
-                                            <span className="px-4 py-1.5 rounded-full text-[1.4rem] font-bold bg-emerald-50 text-emerald-700">
-                                                {e.stEstacao}[cite: 10]
+                                        <td className="py-3 px-4 font-bold">{e.idEstacao}</td>
+                                        <td className="py-3 px-4 font-bold text-[var(--primary-dark)]">{e.nmEstacao}</td>
+                                        <td className="py-3 px-4">
+                                            <span className="px-3 py-1 rounded-full text-[1.3rem] font-bold bg-emerald-50 text-emerald-700">
+                                                {e.stEstacao}
                                             </span>
                                         </td>
                                     </tr>
@@ -447,127 +477,131 @@ export function Principal() {
                     </div>
                 </section>
 
-                {/* BLOCO 4: STATUS OPERACIONAL (GET /status-operacional) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="border-b border-gray-200 pb-5">
-                        <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
-                            ⚠️ Status Operacional (Ocorrências)
+                {/* BLOCO 4: STATUS OPERACIONAL */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                        <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                            ⚠️ Status Operacional
                         </h2>
-                        <p className="text-[1.5rem] text-gray-600 mt-1">Monitoramento de atrasos, interrupções e manutenções ativas.</p>
+                        <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Monitoramento de atrasos, interrupções e manutenções ativas.</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {ocorrencias.map((oc) => (
                             <div key={oc.idOcorrencia || Math.random()} className="p-5 rounded-[1.6rem] bg-slate-50 border border-gray-200 space-y-2">
                                 <div className="flex justify-between items-center">
-                                    <span className="font-bold text-[1.6rem] text-rose-600">{oc.tpOcorrencia}[cite: 11]</span>
-                                    <span className="text-[1.3rem] font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">{oc.dsSituacao}[cite: 11]</span>
+                                    <span className="font-bold text-[1.5rem] text-rose-600">{oc.tpOcorrencia}</span>
+                                    <span className="text-[1.2rem] font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">{oc.dsSituacao}</span>
                                 </div>
-                                <p className="text-[1.5rem] text-gray-800"><strong>Status:</strong> {oc.dsStatus}[cite: 11]</p>
-                                <p className="text-[1.3rem] text-gray-500">Início: {oc.dtInicio} | Origem: {oc.dsOrigem}[cite: 11]</p>
+                                <p className="text-[1.4rem] text-gray-800"><strong>Status:</strong> {oc.dsStatus}</p>
+                                <p className="text-[1.2rem] text-gray-500">Início: {oc.dtInicio} | Origem: {oc.dsOrigem}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
-                {/* BLOCO 5: PREVISÕES DE LOTAÇÃO & GERAÇÃO SOB DEMANDA (POST /previsoes-lotacao) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="border-b border-gray-200 pb-5">
-                        <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
-                            📊 Previsões de Lotação & Geração Sob Demanda
+                {/* BLOCO 5: PREVISÕES DE LOTAÇÃO */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4">
+                        <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                            📊 Previsão de Lotação sob Demanda
                         </h2>
-                        <p className="text-[1.5rem] text-gray-600 mt-1">Consulte previsões persistidas ou calcule novas estimativas em tempo real.</p>
+                        <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Calcule novas estimativas de fluxo em tempo real.</p>
                     </div>
 
-                    <form onSubmit={handleCalcularPrevisao} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-slate-50 rounded-[1.8rem] border">
+                    <form onSubmit={handleCalcularPrevisao} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-slate-50 rounded-[1.8rem] border">
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">Data (AAAA-MM-DD)</label>
-                            <input type="date" required value={formPrevisao.dataPrevisao} onChange={e => setFormPrevisao({...formPrevisao, dataPrevisao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.5rem]" />
+                            <input type="date" required value={formPrevisao.dataPrevisao} onChange={e => setFormPrevisao({...formPrevisao, dataPrevisao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">Hora (0-23)</label>
-                            <input type="number" min="0" max="23" required value={formPrevisao.hora} onChange={e => setFormPrevisao({...formPrevisao, hora: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.5rem]" />
+                            <input type="number" min="0" max="23" required value={formPrevisao.hora} onChange={e => setFormPrevisao({...formPrevisao, hora: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">ID Estação</label>
-                            <input type="number" required value={formPrevisao.idEstacao} onChange={e => setFormPrevisao({...formPrevisao, idEstacao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.5rem]" />
+                            <input type="number" required value={formPrevisao.idEstacao} onChange={e => setFormPrevisao({...formPrevisao, idEstacao: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="text-[1.4rem] font-bold">ID Linha</label>
-                            <input type="number" required value={formPrevisao.idLinha} onChange={e => setFormPrevisao({...formPrevisao, idLinha: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.5rem]" />
+                            <input type="number" required value={formPrevisao.idLinha} onChange={e => setFormPrevisao({...formPrevisao, idLinha: e.target.value})} className="p-3 bg-white border rounded-xl text-[1.4rem]" />
                         </div>
                         <div className="md:col-span-4 flex justify-end">
-                            <button type="submit" className="px-6 py-3 bg-[var(--primary-dark)] text-white text-[1.5rem] font-bold rounded-xl cursor-pointer">
-                                Calcular Previsão Sob Demanda[cite: 11, 12]
+                            <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-[var(--primary-dark)] text-white text-[1.5rem] font-bold rounded-xl cursor-pointer shadow-md">
+                                Calcular Previsão Sob Demanda
                             </button>
                         </div>
                     </form>
 
+                    {renderStatusBox(statusPrevisao)}
+
                     {resultadoPrevisaoDemanda && (
-                        <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-[1.6rem] text-[1.6rem] space-y-2">
+                        <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-[1.6rem] text-[1.5rem] space-y-2">
                             <p className="font-bold text-emerald-800">Previsão Calculada com Sucesso:</p>
-                            <p><strong>Classificação:</strong> {resultadoPrevisaoDemanda.dsClassificacao}[cite: 12]</p>
-                            <p><strong>Índice de Lotação (0-100):</strong> {resultadoPrevisaoDemanda.vlIndiceLotacao}[cite: 12]</p>
-                            <p><strong>Modelo Utilizado:</strong> {resultadoPrevisaoDemanda.dsModeloUtilizado}[cite: 12]</p>
+                            <p><strong>Classificação:</strong> {resultadoPrevisaoDemanda.dsClassificacao}</p>
+                            <p><strong>Índice de Lotação (0-100):</strong> {resultadoPrevisaoDemanda.vlIndiceLotacao}</p>
+                            <p><strong>Modelo Utilizado:</strong> {resultadoPrevisaoDemanda.dsModeloUtilizado}</p>
                         </div>
                     )}
                 </section>
 
-                {/* BLOCO 6: GERENCIAMENTO DE USUÁRIOS (CRUD Completo) */}
-                <section className="bg-white p-8 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-8">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-5 gap-6">
+                {/* BLOCO 6: GERENCIAMENTO DE USUÁRIOS */}
+                <section className="bg-white p-6 sm:p-10 rounded-[2.4rem] border-2 border-[var(--primary-dark)]/15 shadow-xl space-y-6">
+                    <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h2 className="font-[var(--fonte-principal)] text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
-                                ⚙️ Painel de Controle de Usuários (API)
+                            <h2 className="font-[var(--fonte-principal)] text-[2.2rem] sm:text-[2.4rem] font-bold text-[var(--primary-dark)] flex items-center gap-3">
+                                ⚙️ Painel de Controle de Usuários
                             </h2>
-                            <p className="text-[1.5rem] text-gray-600 mt-1">Endpoints integrados: GET, PUT e DELETE em tempo real[cite: 8].</p>
+                            <p className="text-[1.4rem] sm:text-[1.5rem] text-gray-600 mt-1">Endpoints integrados: GET, PUT e DELETE em tempo real.</p>
                         </div>
-                        <button onClick={carregarDadosIniciais} className="px-6 py-3.5 bg-[var(--primary-dark)] hover:bg-[var(--secondary-dark)] text-white text-[1.6rem] font-bold rounded-[1.4rem] transition cursor-pointer shadow-md">
-                            🔄 Atualizar Lista (/usuario)[cite: 8]
+                        <button onClick={carregarDadosIniciais} className="w-full sm:w-auto px-6 py-3 bg-[var(--primary-dark)] text-white text-[1.5rem] font-bold rounded-[1.2rem] transition cursor-pointer shadow-md text-center">
+                            🔄 Atualizar Lista
                         </button>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <input type="number" placeholder="Consultar por ID exato (Ex: 1, 2...)" value={buscaIdUsuario} onChange={e => setBuscaIdUsuario(e.target.value)} className="flex-1 bg-slate-50 border-2 border-gray-300 rounded-[1.4rem] px-6 py-4 text-[1.7rem] outline-none" />
-                        <button onClick={handleBuscarUsuarioPorId} className="px-8 py-4 bg-slate-900 text-white font-bold text-[1.6rem] rounded-[1.4rem] cursor-pointer">Consultar por ID[cite: 8]</button>
-                        <button onClick={() => setUsuarioBuscado(null)} className="px-6 py-4 bg-gray-100 text-gray-700 font-semibold text-[1.6rem] rounded-[1.4rem] cursor-pointer">Limpar</button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <input type="number" placeholder="Consultar por ID exato" value={buscaIdUsuario} onChange={e => setBuscaIdUsuario(e.target.value)} className="flex-1 bg-slate-50 border-2 border-gray-300 rounded-[1.2rem] px-4 py-3 text-[1.5rem] outline-none" />
+                        <button onClick={handleBuscarUsuarioPorId} className="px-6 py-3 bg-slate-900 text-white font-bold text-[1.5rem] rounded-[1.2rem] cursor-pointer">Consultar ID</button>
+                        <button onClick={() => setUsuarioBuscado(null)} className="px-5 py-3 bg-gray-100 text-gray-700 font-semibold text-[1.5rem] rounded-[1.2rem] cursor-pointer">Limpar</button>
                     </div>
 
+                    {renderStatusBox(statusUsuario)}
+
                     {usuarioBuscado ? (
-                        <div className="border-2 border-[var(--primary-dark)]/20 rounded-[2rem] p-8 space-y-5 bg-slate-50 shadow-md">
+                        <div className="border-2 border-[var(--primary-dark)]/20 rounded-[2rem] p-6 space-y-4 bg-slate-50 shadow-md">
                             <div className="flex items-center justify-between">
-                                <span className="text-[1.5rem] font-bold bg-[var(--primary)]/10 text-[var(--primary-dark)] px-4 py-1.5 rounded-xl">ID Encontrado: {usuarioBuscado.idUsuario}</span>
-                                <button onClick={() => handleExcluirUsuario(usuarioBuscado.idUsuario)} className="px-4 py-2 bg-red-50 text-red-600 text-[1.5rem] font-bold rounded-xl border border-red-200">Excluir Conta (DELETE)[cite: 8]</button>
+                                <span className="text-[1.4rem] font-bold bg-[var(--primary)]/10 text-[var(--primary-dark)] px-3 py-1 rounded-xl">ID Encontrado: {usuarioBuscado.idUsuario}</span>
+                                <button onClick={() => handleExcluirUsuario(usuarioBuscado.idUsuario)} className="px-4 py-2 bg-red-50 text-red-600 text-[1.4rem] font-bold rounded-xl border border-red-200">Excluir Conta</button>
                             </div>
-                            <p className="text-[1.8rem]"><strong>Nome:</strong> {usuarioBuscado.nmUsuario}</p>
-                            <p className="text-[1.8rem]"><strong>E-mail:</strong> {usuarioBuscado.dsEmail}</p>
+                            <p className="text-[1.6rem]"><strong>Nome:</strong> {usuarioBuscado.nmUsuario}</p>
+                            <p className="text-[1.6rem]"><strong>E-mail:</strong> {usuarioBuscado.dsEmail}</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
                             {usuarios.map(u => (
-                                <div key={u.idUsuario} className="border border-gray-200 rounded-[2rem] p-6 bg-slate-50 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                                <div key={u.idUsuario} className="border border-gray-200 rounded-[2rem] p-5 bg-slate-50 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                     {editandoId === u.idUsuario ? (
-                                        <div className="flex-1 space-y-4 w-full mr-4">
-                                            <input type="text" value={editNome} onChange={e => setEditNome(e.target.value)} placeholder="Novo Nome" className="w-full bg-white border-2 border-gray-300 p-4 rounded-[1.2rem] text-[1.6rem]" />
-                                            <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Novo E-mail" className="w-full bg-white border-2 border-gray-300 p-4 rounded-[1.2rem] text-[1.6rem]" />
-                                            <div className="flex gap-3">
-                                                <button onClick={() => handleAtualizarUsuario(u.idUsuario!)} className="px-6 py-3 bg-emerald-600 text-white text-[1.5rem] font-bold rounded-[1.2rem] cursor-pointer">Salvar (PUT)[cite: 8]</button>
-                                                <button onClick={() => setEditandoId(null)} className="px-6 py-3 bg-gray-200 text-gray-700 text-[1.5rem] font-bold rounded-[1.2rem] cursor-pointer">Cancelar</button>
+                                        <div className="flex-1 space-y-3 w-full">
+                                            <input type="text" value={editNome} onChange={e => setEditNome(e.target.value)} placeholder="Novo Nome" className="w-full bg-white border-2 border-gray-300 p-3 rounded-xl text-[1.5rem]" />
+                                            <input type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder="Novo E-mail" className="w-full bg-white border-2 border-gray-300 p-3 rounded-xl text-[1.5rem]" />
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleAtualizarUsuario(u.idUsuario!)} className="px-5 py-2.5 bg-emerald-600 text-white text-[1.4rem] font-bold rounded-xl cursor-pointer">Salvar</button>
+                                                <button onClick={() => setEditandoId(null)} className="px-5 py-2.5 bg-gray-200 text-gray-700 text-[1.4rem] font-bold rounded-xl cursor-pointer">Cancelar</button>
                                             </div>
                                         </div>
                                     ) : (
                                         <div>
-                                            <span className="text-[1.4rem] font-bold bg-[var(--primary)]/10 text-[var(--primary-dark)] px-3 py-1 rounded-lg">ID: {u.idUsuario}</span>
-                                            <h4 className="font-bold text-[2rem] text-[var(--primary-dark)] mt-3">{u.nmUsuario}</h4>
-                                            <p className="text-[1.5rem] text-gray-600 mt-1">{u.dsEmail}</p>
+                                            <span className="text-[1.3rem] font-bold bg-[var(--primary)]/10 text-[var(--primary-dark)] px-2.5 py-0.5 rounded-lg">ID: {u.idUsuario}</span>
+                                            <h4 className="font-bold text-[1.8rem] text-[var(--primary-dark)] mt-2">{u.nmUsuario}</h4>
+                                            <p className="text-[1.4rem] text-gray-600 mt-0.5">{u.dsEmail}</p>
                                         </div>
                                     )}
 
-                                    <div className="flex gap-3 self-end sm:self-center">
+                                    <div className="flex gap-2 self-end sm:self-center">
                                         {editandoId !== u.idUsuario && (
-                                            <button onClick={() => { setEditandoId(u.idUsuario!); setEditNome(u.nmUsuario || ''); setEditEmail(u.dsEmail || ''); }} className="px-5 py-3 bg-sky-50 text-sky-600 text-[1.5rem] font-bold rounded-[1.2rem] border border-sky-200 cursor-pointer">Editar</button>
+                                            <button onClick={() => { setEditandoId(u.idUsuario!); setEditNome(u.nmUsuario || ''); setEditEmail(u.dsEmail || ''); }} className="px-4 py-2 bg-sky-50 text-sky-600 text-[1.4rem] font-bold rounded-xl border border-sky-200 cursor-pointer">Editar</button>
                                         )}
-                                        <button onClick={() => handleExcluirUsuario(u.idUsuario)} className="px-5 py-3 bg-red-50 text-red-600 text-[1.5rem] font-bold rounded-[1.2rem] border border-red-200 cursor-pointer">Excluir[cite: 8]</button>
+                                        <button onClick={() => handleExcluirUsuario(u.idUsuario)} className="px-4 py-2 bg-red-50 text-red-600 text-[1.4rem] font-bold rounded-xl border border-red-200 cursor-pointer">Excluir</button>
                                     </div>
                                 </div>
                             ))}
