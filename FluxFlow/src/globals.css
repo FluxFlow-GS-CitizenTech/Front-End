@@ -1,0 +1,67 @@
+    @import "tailwindcss";
+
+    @layer base {
+    :root {
+        /* Cores oficiais do FluxFlow baseadas no pitch */
+        --primary: #005A9C;         
+        --primary-dark: #003366;    
+        --secondary: #E30613;      
+        --secondary-dark: #A6000A;  
+        --bg-primary: #FDFBF7;      
+        --bg-dark: #EAE6DF;
+        
+        /* Textos e Tipografia */
+        --text-main: #1f2937;
+        --text-title: #fefdfd;
+        --titulo-hero: 6rem;
+        --slogan: 2.7rem;
+        --titulo-main: 4rem;
+        --sub-titulo: 2.5rem;
+        
+        /* Fontes */
+        --fonte-texto: "BIZ UDGothic", sans-serif;
+        --fonte-principal: "BIZ UDPGothic", sans-serif;
+    }
+
+    html {
+        font-size: 62.5%; 
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-size: 1.6rem;
+        min-height: 100vh;
+        width: 100%;
+        background-color: var(--bg-primary);
+        color: var(--text-main);
+        font-family: var(--fonte-texto);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    main {
+        width: 100%;
+        flex: 1;
+    }
+    }
+
+    /* Utilitários globais personalizados */
+    .conteudo {
+        width: 100%;
+        min-height: calc(100vh - 80px);
+    }
